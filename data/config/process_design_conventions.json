@@ -1,0 +1,156 @@
+{
+  "version": "v0.1",
+  "scope": "minimal_EOA140_subsidiary_major_matter",
+  "description": "第一版流程设计输出规范。当前只覆盖 06 子公司重大事项流程的核心口径，用于约束 extraction prompt 和 validator。",
+  "activation": {
+    "process_name_keywords": [
+      "子公司重大事项",
+      "重大事项"
+    ]
+  },
+  "global_rules": {
+    "component_type_policy": {
+      "allowed_values_source": "data.schema.process_schema.ComponentType",
+      "enum_field_preferred_components": [
+        "下拉单选",
+        "下拉多选"
+      ],
+      "radio_usage": "只有 source 明确写单选按钮/按钮式选项/单选项时才使用 单选按钮；一般业务枚举优先使用 下拉单选 或 下拉多选。",
+      "options_policy": "下拉单选、下拉多选、单选按钮必须把枚举值写入 options，不要只埋在 logic_description。"
+    },
+    "required_stage_policy": {
+      "meaning": "required_stages 只表示用户必须在该环节手工填写或选择。",
+      "auto_field_policy": "系统自动带出、自动生成、自动计算、只读展示字段 required_stages=[]，不要因为字段出现在起草页就写 draft。",
+      "draft_required_policy": "需要起草人手工填写或选择的字段使用 required_stages=[\"draft\"]。"
+    },
+    "condition_policy": {
+      "canonical_phrases": [
+        "结论性意见=同意",
+        "结论性意见=不同意",
+        "最后一人",
+        "部门最后一人",
+        "多环节最后一人"
+      ],
+      "phrase_glossary": "条件短语语义：'结论性意见=同意/不同意'按当前处理人结论分流；对【多选-并行处理】这类同一环节有多个处理人的节点，向下流转路径常带'最后一人'或'部门最后一人'，表示该环节/该部门最后一个处理人完成时才触发（而非每人都触发）；当多个并行环节/部门会签需全部完成才继续时用'多环节最后一人'。退回/返回类路径通常也带相同的'最后一人'口径。",
+      "unsupported_actions": [
+        "多人并行审批",
+        "同时送多个环节",
+        "结束本人处理",
+        "结束本部门处理"
+      ],
+      "unsupported_action_policy": "当前 demo 不支持同一环节的多人并行审批、同时送多个环节、结束本人处理、结束本部门处理，这些动作不要硬塞成普通 submit_path；如 source 明确出现，写入待确认项。注意区分：'再加一个同环节处理人'这类【顺序自环】路径（如'增加XX审核''增加XX审批''增加XX处理'，target_node_id 指向本环节自身、无条件）是【支持】的，应正常作为 submit_path 输出，不要因为出现'增加'二字而漏掉。"
+    }
+  },
+  "case_rules": {
+    "EOA140_subsidiary_major_matter": {
+      "summary": "子公司重大事项审批备案流程的最小出货规范。",
+      "field_rules": [
+        {
+          "field_name": "编号",
+          "expected_component_type": "文号",
+          "expected_required_stages": [],
+          "expected_editable_stages": [
+            "draft"
+          ],
+          "options_required": false,
+          "note": "可手工录入或弹框选择；不要抽成纯系统自动生成且不可人工选择。"
+        },
+        {
+          "field_name": "部门",
+          "expected_component_type": "部门选择",
+          "expected_required_stages": [
+            "draft"
+          ],
+          "expected_editable_stages": [
+            "draft"
+          ],
+          "options_required": false,
+          "note": "部门字段用于选择起草部门，不要抽成只读文本。"
+        },
+        {
+          "field_name": "任务类型",
+          "expected_component_type": "下拉单选",
+          "expected_required_stages": [
+            "draft"
+          ],
+          "expected_editable_stages": [
+            "draft"
+          ],
+          "options_required": true,
+          "note": "业务枚举字段，除非 source 明确说单选按钮，否则使用下拉类组件。"
+        },
+        {
+          "field_name": "任务名称",
+          "expected_component_type": "下拉单选",
+          "expected_required_stages": [
+            "draft"
+          ],
+          "expected_editable_stages": [
+            "draft"
+          ],
+          "options_required": false,
+          "note": "任务名称不要自行编造；如 source 只给映射关系不完整，保留待确认。"
+        },
+        {
+          "field_name": "重要程度",
+          "expected_component_type": "下拉单选",
+          "expected_required_stages": [
+            "draft"
+          ],
+          "expected_editable_stages": [
+            "draft"
+          ],
+          "options_required": true,
+          "note": "业务枚举字段，选项必须写入 options。"
+        }
+      ],
+      "flow_node_rules": [
+        {
+          "node_id": "draft",
+          "node_name": "起草"
+        },
+        {
+          "node_id": "subsidiary_internal_review",
+          "node_name": "子公司内部人员审核",
+          "handler_source": "本公司"
+        },
+        {
+          "node_id": "subsidiary_executive_approval",
+          "node_name": "子公司高管审批",
+          "handler_source": "本公司"
+        },
+        {
+          "node_id": "applicant_distribution",
+          "node_name": "申请人分发",
+          "handler_source": "不指定"
+        },
+        {
+          "node_id": "counterpart_dispatch",
+          "node_name": "对口部门专员分发",
+          "handler_source": "表单字段指定",
+          "source_field": "对口部门"
+        },
+        {
+          "node_id": "department_specialist",
+          "node_name": "部门专员处理",
+          "handler_source": "特定部门"
+        },
+        {
+          "node_id": "department_staff",
+          "node_name": "部门人员处理",
+          "handler_source": "本条线"
+        },
+        {
+          "node_id": "department_leader",
+          "node_name": "部门领导处理",
+          "handler_source": "本条线"
+        },
+        {
+          "node_id": "company_leader_instruction",
+          "node_name": "公司领导批示",
+          "handler_source": "特定部门"
+        }
+      ]
+    }
+  }
+}

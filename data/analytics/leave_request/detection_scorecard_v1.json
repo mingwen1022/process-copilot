@@ -1,0 +1,82 @@
+{
+  "scenario_id": "leave_v1",
+  "total_injected": 6,
+  "detectable_injected": 5,
+  "detected_injected": 5,
+  "recall_over_detectable": 1.0,
+  "recall_over_all": 0.8333,
+  "detected_candidate_count": 7,
+  "spurious_false_positive_count": 0,
+  "defect_matches": [
+    {
+      "defect_id": "slow_line_leader",
+      "defect_type": "慢环节",
+      "target_node_id": "line_leader",
+      "expected_category": "slow_node",
+      "detectable": true,
+      "detected": true,
+      "matched_bottleneck_id": "slow_node:line_leader"
+    },
+    {
+      "defect_id": "high_return_dept_supervisor",
+      "defect_type": "高退回率",
+      "target_node_id": "dept_supervisor",
+      "expected_category": "high_return_rate",
+      "detectable": true,
+      "detected": true,
+      "matched_bottleneck_id": "high_return_rate:dept_supervisor"
+    },
+    {
+      "defect_id": "sla_breach_dept_gm",
+      "defect_type": "超时违约",
+      "target_node_id": "dept_gm",
+      "expected_category": "sla_breach",
+      "detectable": true,
+      "detected": true,
+      "matched_bottleneck_id": "sla_breach:dept_gm"
+    },
+    {
+      "defect_id": "illegal_skip_line_leader",
+      "defect_type": "违规跳级",
+      "target_node_id": "dept_gm",
+      "expected_category": "conformance_violation",
+      "detectable": true,
+      "detected": true,
+      "matched_bottleneck_id": "conformance_violation:process"
+    },
+    {
+      "defect_id": "manual_intervention_case",
+      "defect_type": "线下人工介入",
+      "target_node_id": null,
+      "expected_category": "manual_intervention",
+      "detectable": true,
+      "detected": true,
+      "matched_bottleneck_id": "manual_intervention:process"
+    },
+    {
+      "defect_id": "zombie_case",
+      "defect_type": "僵尸实例",
+      "target_node_id": null,
+      "expected_category": null,
+      "detectable": false,
+      "detected": false,
+      "matched_bottleneck_id": null
+    }
+  ],
+  "extra_detections": [
+    {
+      "bottleneck_id": "sla_breach:line_leader",
+      "category": "sla_breach",
+      "node_id": "line_leader",
+      "classification": "secondary_consequence",
+      "reason": "该环节被判为慢环节，SLA 低是慢的连带结果"
+    },
+    {
+      "bottleneck_id": "high_rework:process",
+      "category": "high_rework",
+      "node_id": null,
+      "classification": "secondary_consequence",
+      "reason": "整体返工率高是高退回率的直接后果"
+    }
+  ]
+}

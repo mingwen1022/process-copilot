@@ -1,0 +1,235 @@
+{
+  "v1_case_count": 600,
+  "v2_case_count": 600,
+  "case_mix_v1": {
+    "年假": 179,
+    "病假": 110,
+    "事假": 147,
+    "产假": 35,
+    "丧假": 65,
+    "婚假": 32,
+    "陪产假": 32
+  },
+  "case_mix_v2": {
+    "年假": 169,
+    "事假": 162,
+    "丧假": 65,
+    "病假": 124,
+    "陪产假": 18,
+    "产假": 33,
+    "婚假": 29
+  },
+  "line_leader_reach_ratio_v1": 0.2833,
+  "line_leader_reach_ratio_v2": 0.1383,
+  "overview": [
+    {
+      "key": "avg_case_duration_hours",
+      "label": "平均办结时长(小时)",
+      "direction": "down",
+      "v1": 76.1323,
+      "v2": 22.699,
+      "delta": -53.4333,
+      "pct_change": -0.7018,
+      "improved": true
+    },
+    {
+      "key": "avg_node_visits",
+      "label": "平均流转环节数",
+      "direction": "down",
+      "v1": 4.4225,
+      "v2": 3.3569,
+      "delta": -1.0656,
+      "pct_change": -0.2409,
+      "improved": true
+    },
+    {
+      "key": "avg_last_node_dwell_hours",
+      "label": "最后环节平均停滞(小时)",
+      "direction": "down",
+      "v1": 50.851,
+      "v2": 14.1076,
+      "delta": -36.7434,
+      "pct_change": -0.7226,
+      "improved": true
+    },
+    {
+      "key": "manual_intervention_case_ratio",
+      "label": "人工介入比例",
+      "direction": "down",
+      "v1": 0.0683,
+      "v2": 0.0267,
+      "delta": -0.0416,
+      "pct_change": -0.6091,
+      "improved": true
+    },
+    {
+      "key": "completion_rate",
+      "label": "办结率",
+      "direction": "up",
+      "v1": 0.9783,
+      "v2": 0.99,
+      "delta": 0.0117,
+      "pct_change": 0.012,
+      "improved": true
+    }
+  ],
+  "path": [
+    {
+      "key": "rework_rate",
+      "label": "返工率",
+      "direction": "down",
+      "v1": 0.42,
+      "v2": 0.165,
+      "delta": -0.255,
+      "pct_change": -0.6071,
+      "improved": true
+    },
+    {
+      "key": "conformance_violation_count",
+      "label": "违规跳级次数",
+      "direction": "down",
+      "v1": 7.0,
+      "v2": 0.0,
+      "delta": -7.0,
+      "pct_change": -1.0,
+      "improved": true
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "draft",
+      "node_name": "起草",
+      "metrics": [
+        {
+          "key": "avg_dwell_hours",
+          "label": "平均处理时长(小时)",
+          "direction": "down",
+          "v1": 0.1935,
+          "v2": 0.1844,
+          "delta": -0.0091,
+          "pct_change": -0.047,
+          "improved": true
+        },
+        {
+          "key": "return_rate",
+          "label": "退回率",
+          "direction": "down",
+          "v1": 0.0,
+          "v2": 0.0,
+          "delta": 0.0,
+          "pct_change": null,
+          "improved": null
+        }
+      ]
+    },
+    {
+      "node_id": "dept_supervisor",
+      "node_name": "部门主管审批",
+      "metrics": [
+        {
+          "key": "avg_dwell_hours",
+          "label": "平均处理时长(小时)",
+          "direction": "down",
+          "v1": 4.7022,
+          "v2": 4.8902,
+          "delta": 0.188,
+          "pct_change": 0.04,
+          "improved": false
+        },
+        {
+          "key": "sla_achievement_rate",
+          "label": "SLA 达成率",
+          "direction": "up",
+          "v1": 0.999,
+          "v2": 1.0,
+          "delta": 0.001,
+          "pct_change": 0.001,
+          "improved": true
+        },
+        {
+          "key": "return_rate",
+          "label": "退回率",
+          "direction": "down",
+          "v1": 0.3424,
+          "v2": 0.1032,
+          "delta": -0.2392,
+          "pct_change": -0.6986,
+          "improved": true
+        }
+      ]
+    },
+    {
+      "node_id": "dept_gm",
+      "node_name": "部门总经理审批",
+      "metrics": [
+        {
+          "key": "avg_dwell_hours",
+          "label": "平均处理时长(小时)",
+          "direction": "down",
+          "v1": 35.0523,
+          "v2": 16.006,
+          "delta": -19.0463,
+          "pct_change": -0.5434,
+          "improved": true
+        },
+        {
+          "key": "sla_achievement_rate",
+          "label": "SLA 达成率",
+          "direction": "up",
+          "v1": 0.6582,
+          "v2": 0.9149,
+          "delta": 0.2567,
+          "pct_change": 0.39,
+          "improved": true
+        },
+        {
+          "key": "return_rate",
+          "label": "退回率",
+          "direction": "down",
+          "v1": 0.0825,
+          "v2": 0.0747,
+          "delta": -0.0078,
+          "pct_change": -0.0945,
+          "improved": true
+        }
+      ]
+    },
+    {
+      "node_id": "line_leader",
+      "node_name": "条线分管领导审批",
+      "metrics": [
+        {
+          "key": "avg_dwell_hours",
+          "label": "平均处理时长(小时)",
+          "direction": "down",
+          "v1": 116.6045,
+          "v2": 17.5608,
+          "delta": -99.0437,
+          "pct_change": -0.8494,
+          "improved": true
+        },
+        {
+          "key": "sla_achievement_rate",
+          "label": "SLA 达成率",
+          "direction": "up",
+          "v1": 0.2762,
+          "v2": 0.9889,
+          "delta": 0.7127,
+          "pct_change": 2.5804,
+          "improved": true
+        },
+        {
+          "key": "return_rate",
+          "label": "退回率",
+          "direction": "down",
+          "v1": 0.0608,
+          "v2": 0.0778,
+          "delta": 0.017,
+          "pct_change": 0.2796,
+          "improved": false
+        }
+      ]
+    }
+  ],
+  "headline": "平均办结时长 76h → 23h（↓70%）；返工率 42% → 16%"
+}

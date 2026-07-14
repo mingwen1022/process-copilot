@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "app", "runtimeExecutable": "uv", "runtimeArgs": ["run", "uvicorn", "app.api.server:app", "--host", "127.0.0.1", "--port", "8811"], "port": 8811 },
+    { "name": "proto", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "4599", "--directory", "doc/prototype"], "port": 4599 }
+  ]
+}

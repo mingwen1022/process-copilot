@@ -1,0 +1,132 @@
+{
+  "scenario_id": "leave_v2",
+  "process_target_path": "data/analytics/leave_request/process_v2.json",
+  "org_seed_path": "data/org/org_seed.json",
+  "case_count": 600,
+  "start_date": "2026-01-01",
+  "end_date": "2026-06-30",
+  "arrival": {
+    "rate_per_day": 4.0,
+    "peak_multiplier": {
+      "month_end": 1.6
+    }
+  },
+  "node_dwell_params": {
+    "dept_supervisor": {
+      "distribution": "lognormal",
+      "mu": 1.386,
+      "sigma": 0.6
+    },
+    "dept_gm": {
+      "distribution": "lognormal",
+      "mu": 2.079,
+      "sigma": 0.6
+    },
+    "line_leader": {
+      "distribution": "lognormal",
+      "mu": 2.079,
+      "sigma": 0.5
+    }
+  },
+  "decision_probabilities": {
+    "dept_supervisor": 0.9,
+    "dept_gm": 0.92,
+    "line_leader": 0.95
+  },
+  "assumed_sla_days": {
+    "dept_supervisor": 1.0,
+    "dept_gm": 2.0,
+    "line_leader": 3.0
+  },
+  "leave_type_weights": {
+    "年假": 0.3,
+    "事假": 0.25,
+    "病假": 0.2,
+    "婚假": 0.05,
+    "产假": 0.05,
+    "陪产假": 0.05,
+    "丧假": 0.1
+  },
+  "leave_days_range": {
+    "年假": [
+      1,
+      10
+    ],
+    "事假": [
+      1,
+      5
+    ],
+    "病假": [
+      1,
+      7
+    ],
+    "婚假": [
+      3,
+      10
+    ],
+    "产假": [
+      90,
+      158
+    ],
+    "陪产假": [
+      7,
+      15
+    ],
+    "丧假": [
+      1,
+      15
+    ]
+  },
+  "injected_defects": [
+    {
+      "defect_id": "slow_line_leader",
+      "type": "慢环节",
+      "target_node_id": "line_leader",
+      "params": {
+        "dwell_multiplier": 2.0
+      },
+      "affected_case_ratio": 0.85
+    },
+    {
+      "defect_id": "high_return_dept_supervisor",
+      "type": "高退回率",
+      "target_node_id": "dept_supervisor",
+      "params": {
+        "return_probability": 0.1
+      },
+      "affected_case_ratio": 1.0
+    },
+    {
+      "defect_id": "sla_breach_dept_gm",
+      "type": "超时违约",
+      "target_node_id": "dept_gm",
+      "params": {},
+      "affected_case_ratio": 0.08
+    },
+    {
+      "defect_id": "illegal_skip_line_leader",
+      "type": "违规跳级",
+      "target_node_id": "dept_gm",
+      "params": {
+        "force_target_node_id": "END"
+      },
+      "affected_case_ratio": 0.0
+    },
+    {
+      "defect_id": "manual_intervention_case",
+      "type": "线下人工介入",
+      "target_node_id": null,
+      "params": {},
+      "affected_case_ratio": 0.03
+    },
+    {
+      "defect_id": "zombie_case",
+      "type": "僵尸实例",
+      "target_node_id": null,
+      "params": {},
+      "affected_case_ratio": 0.01
+    }
+  ],
+  "random_seed": 42,
+  "max_resubmit_loops": 4
+}

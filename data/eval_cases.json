@@ -1,0 +1,21 @@
+{
+  "cases": [
+    {
+      "case_id": "EOA140_subsidiary_major_matter",
+      "target": "data/cases/EOA140_subsidiary_major_matter/standard/target.json",
+      "run": "runs/EOA140"
+    },
+    {
+      "case_id": "leave_request",
+      "target": "data/cases/leave_request/standard/target.json",
+      "run": "runs/leave_request",
+      "allow_draft_target": true
+    },
+    {
+      "case_id": "expense_reimbursement",
+      "target": "data/cases/expense_reimbursement/standard/target.json",
+      "run": "runs/expense_reimbursement",
+      "allow_draft_target": true
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "rules": [
+    {
+      "rule_id": "eoa140.company_leader_instruction",
+      "title": "公司级事项须公司领导批示",
+      "dimension": "company_policy",
+      "statement": "涉及公司级重大事项的，须经公司领导批示后方可备案归档。",
+      "applies_to_processes": [
+        "EOA140"
+      ],
+      "applies_to_domains": [
+        "governance",
+        "subsidiary"
+      ],
+      "applicability_condition": null,
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "must_have_node",
+        "params": {
+          "role_keywords": [
+            "公司领导",
+            "高级管理人员",
+            "总裁"
+          ],
+          "name_keywords": [
+            "公司领导批示"
+          ]
+        }
+      },
+      "provenance": {
+        "source_doc": "subsidiary_major_matter_policy",
+        "clause": "二、流转与审批层级 第4条"
+      },
+      "severity": "high"
+    },
+    {
+      "rule_id": "eoa140.countersign_parallel",
+      "title": "对口部门并行会签要求",
+      "dimension": "company_policy",
+      "statement": "对口部门会签环节须采用多选-并行处理，涉及财务、法律、风险的重大事项不得跳过并行会签。",
+      "applies_to_processes": [
+        "EOA140"
+      ],
+      "applies_to_domains": [
+        "governance",
+        "countersign"
+      ],
+      "applicability_condition": null,
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "handler_mode_for_node",
+        "params": {
+          "node_keywords": [
+            "会签",
+            "部门人员处理",
+            "专员分发",
+            "部门领导处理"
+          ],
+          "mode_keywords": [
+            "并行"
+          ]
+        }
+      },
+      "provenance": {
+        "source_doc": "subsidiary_major_matter_policy",
+        "clause": "三、会签要求 第1-2条"
+      },
+      "severity": "medium"
+    },
+    {
+      "rule_id": "eoa140.recusal_adjacent_approver",
+      "title": "会签链路同人回避提示",
+      "dimension": "company_policy",
+      "statement": "审批链路中若连续两个审批环节解析为同一人，应提示跳过或上报上级，避免同人连续审批。",
+      "applies_to_processes": [
+        "EOA140"
+      ],
+      "applies_to_domains": [
+        "governance",
+        "authorization"
+      ],
+      "applicability_condition": null,
+      "check_type": "llm_judge",
+      "requirement": null,
+      "provenance": {
+        "source_doc": "subsidiary_major_matter_policy",
+        "clause": "四、回避要求"
+      },
+      "severity": "medium",
+      "trigger_attributes": [
+        "handler",
+        "submit_paths"
+      ]
+    }
+  ]
+}

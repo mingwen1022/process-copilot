@@ -1,0 +1,169 @@
+{
+  "rules": [
+    {
+      "rule_id": "leave.sick_leave_certificate",
+      "title": "病假证明材料要求",
+      "dimension": "company_policy",
+      "statement": "病假且请假天数大于等于3天的，必须上传就诊证明或医疗机构病假条作为按条件必传附件。",
+      "applies_to_processes": [
+        "LEAVE-001"
+      ],
+      "applies_to_domains": [
+        "leave"
+      ],
+      "applicability_condition": "请假类型=病假 且 请假天数>=3",
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "attachment_required_condition",
+        "params": {
+          "attachment_keywords": [
+            "病假",
+            "就诊",
+            "证明"
+          ],
+          "condition_keywords": [
+            "病假",
+            "3"
+          ]
+        }
+      },
+      "provenance": {
+        "source_doc": "leave_management_policy",
+        "clause": "三、材料要求 第1条"
+      },
+      "severity": "high"
+    },
+    {
+      "rule_id": "leave.line_leader_for_long_or_special",
+      "title": "长假/特殊假种须条线领导审批",
+      "dimension": "company_policy",
+      "statement": "请假天数超过7天，或属于婚假、产假、陪产假的，须经条线分管领导审批。",
+      "applies_to_processes": [
+        "LEAVE-001"
+      ],
+      "applies_to_domains": [
+        "leave"
+      ],
+      "applicability_condition": "请假天数>7天 或 请假类型∈{婚假,产假,陪产假}",
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "must_have_node",
+        "params": {
+          "role_keywords": [
+            "条线分管领导"
+          ],
+          "name_keywords": [
+            "条线分管领导"
+          ]
+        }
+      },
+      "provenance": {
+        "source_doc": "leave_management_policy",
+        "clause": "二、审批层级 第4条"
+      },
+      "severity": "high",
+      "governs": [
+        "请假天数",
+        "婚假",
+        "产假",
+        "陪产假",
+        "条线分管领导"
+      ]
+    },
+    {
+      "rule_id": "leave.gm_approval_present",
+      "title": "请假部门总经理审批要求",
+      "dimension": "company_policy",
+      "statement": "除事假、病假在3天以内可在部门主管层结束外，其余请假须经部门总经理审批。",
+      "applies_to_processes": [
+        "LEAVE-001"
+      ],
+      "applies_to_domains": [
+        "leave"
+      ],
+      "applicability_condition": null,
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "must_have_node",
+        "params": {
+          "role_keywords": [
+            "部门总经理"
+          ],
+          "name_keywords": [
+            "部门总经理",
+            "部门领导"
+          ]
+        }
+      },
+      "provenance": {
+        "source_doc": "leave_management_policy",
+        "clause": "二、审批层级 第2-3条"
+      },
+      "severity": "medium",
+      "governs": [
+        "请假天数",
+        "事假",
+        "病假",
+        "部门总经理"
+      ]
+    },
+    {
+      "rule_id": "leave.core_fields_required_at_draft",
+      "title": "起草环节核心字段必填",
+      "dimension": "company_policy",
+      "statement": "请假类型、开始日期、结束日期、请假天数、请假事由为起草环节必填。",
+      "applies_to_processes": [
+        "LEAVE-001"
+      ],
+      "applies_to_domains": [
+        "leave"
+      ],
+      "applicability_condition": null,
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "field_required_at_draft",
+        "params": {
+          "field_keywords": [
+            "请假类型",
+            "开始日期",
+            "结束日期",
+            "请假天数",
+            "请假事由"
+          ]
+        }
+      },
+      "provenance": {
+        "source_doc": "leave_management_policy",
+        "clause": "四、字段与填写要求 第1条"
+      },
+      "severity": "medium"
+    },
+    {
+      "rule_id": "leave.handover_field_present",
+      "title": "请假交接人字段要求",
+      "dimension": "company_policy",
+      "statement": "请假期间须指定工作交接人，交接人不得为申请人本人。",
+      "applies_to_processes": [
+        "LEAVE-001"
+      ],
+      "applies_to_domains": [
+        "leave"
+      ],
+      "applicability_condition": null,
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "field_required_at_draft",
+        "params": {
+          "field_keywords": [
+            "工作交接人"
+          ]
+        }
+      },
+      "provenance": {
+        "source_doc": "leave_management_policy",
+        "clause": "三、材料要求 第3条"
+      },
+      "severity": "medium"
+    }
+  ]
+}

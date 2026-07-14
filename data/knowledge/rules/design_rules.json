@@ -1,0 +1,84 @@
+{
+  "rules": [
+    {
+      "rule_id": "design.has_draft_and_end",
+      "title": "起草环节与结束路径完整性",
+      "dimension": "design_standard",
+      "statement": "每个流程必须有唯一的起草环节，且必须存在通向流程结束（END）的路径。",
+      "applies_to_processes": [
+        "LEAVE-001",
+        "EOA140"
+      ],
+      "applies_to_domains": [
+        "design",
+        "workflow"
+      ],
+      "applicability_condition": null,
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "has_draft_and_end",
+        "params": {}
+      },
+      "provenance": {
+        "source_doc": "process_element_design_standard",
+        "clause": "二、审批环节 第4条"
+      },
+      "severity": "high"
+    },
+    {
+      "rule_id": "design.autofill_fields_readonly",
+      "title": "自动带出字段只读要求",
+      "dimension": "design_standard",
+      "statement": "自动带出的字段（如申请人、所属部门）应为只读文本，不允许编辑。",
+      "applies_to_processes": [
+        "LEAVE-001",
+        "EOA140"
+      ],
+      "applies_to_domains": [
+        "design",
+        "form"
+      ],
+      "applicability_condition": null,
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "readonly_autofill_field",
+        "params": {
+          "field_keywords": [
+            "申请人",
+            "所属部门"
+          ]
+        }
+      },
+      "provenance": {
+        "source_doc": "process_element_design_standard",
+        "clause": "一、表单字段 第2条"
+      },
+      "severity": "medium"
+    },
+    {
+      "rule_id": "design.node_naming_role_action",
+      "title": "审批环节命名规范",
+      "dimension": "design_standard",
+      "statement": "审批环节应以处理角色加动作方式命名，如“部门主管审批”“部门领导处理”。",
+      "applies_to_processes": [
+        "LEAVE-001",
+        "EOA140"
+      ],
+      "applies_to_domains": [
+        "design",
+        "node"
+      ],
+      "applicability_condition": null,
+      "check_type": "llm_judge",
+      "requirement": null,
+      "provenance": {
+        "source_doc": "process_element_design_standard",
+        "clause": "二、审批环节 第1条"
+      },
+      "severity": "medium",
+      "trigger_attributes": [
+        "node_name"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>流程管理 Agent · 顶层架构与工作流</title>
+<style>
+  :root{
+    --bg:#f6f7f9;
+    --panel:#ffffff;
+    --ink:#1a2230;
+    --ink-soft:#5b6675;
+    --line:#e6e9ef;
+    --brand:#2f6bff;
+    --brand-soft:#eaf0ff;
+    --m1:#2f6bff;
+    --m2:#8a94a6;
+    --m3:#12a15a;
+    --m4:#f0821e;
+    --good:#12a15a;
+    --warn:#f0821e;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:32px 24px 72px}
+  a{color:var(--brand);text-decoration:none}
+
+  /* header */
+  header.hero{
+    background:linear-gradient(135deg,#0f1b3d 0%,#1f3b8c 60%,#2f6bff 100%);
+    color:#fff;border-radius:18px;padding:34px 34px 30px;box-shadow:var(--shadow);
+    position:relative;overflow:hidden;
+  }
+  header.hero::after{
+    content:"";position:absolute;right:-80px;top:-80px;width:280px;height:280px;
+    background:radial-gradient(circle,rgba(255,255,255,.14),transparent 70%);
+  }
+  .eyebrow{font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.8;font-weight:600}
+  header.hero h1{margin:8px 0 6px;font-size:30px;letter-spacing:.5px}
+  header.hero p.lead{margin:0;max-width:760px;font-size:15.5px;opacity:.94}
+  .loop-pill{
+    display:inline-flex;gap:8px;flex-wrap:wrap;margin-top:18px;
+  }
+  .loop-pill span{
+    background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);
+    padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:500;
+  }
+  .loop-pill span b{opacity:.7;font-weight:600}
+
+  /* stat row */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:22px 0 4px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+  .stat .num{font-size:26px;font-weight:700;letter-spacing:.5px}
+  .stat .lbl{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+  .stat .sub{font-size:11.5px;color:var(--ink-soft);opacity:.8;margin-top:4px}
+
+  section{margin-top:34px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .sec-head h2{font-size:19px;margin:0}
+  .sec-head .kicker{font-size:12.5px;color:var(--ink-soft)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+
+  /* closed loop */
+  .loop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+  .mod{
+    border:1px solid var(--line);border-radius:12px;padding:16px 15px;background:#fff;position:relative;
+    border-top:3px solid var(--accent);
+  }
+  .mod .tag{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.05em}
+  .mod h3{margin:6px 0 4px;font-size:15.5px}
+  .mod p{margin:0;font-size:12.8px;color:var(--ink-soft)}
+  .mod .state{display:inline-block;margin-top:10px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px}
+  .st-deep{background:#e8f6ee;color:#12a15a}
+  .st-freeze{background:#eef0f3;color:#6b7280}
+  .st-build{background:#fff2e3;color:#d9700f}
+  .loop-arrow{
+    text-align:center;color:var(--ink-soft);font-size:12px;margin-top:14px;
+  }
+  .loop-arrow b{color:var(--m4)}
+
+  /* pipeline */
+  .pipe{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}
+  .node{
+    flex:1 1 150px;min-width:150px;border:1px solid var(--line);border-radius:11px;padding:13px 14px;background:#fbfcfe;
+  }
+  .node.agent{background:var(--brand-soft);border-color:#cfdcff}
+  .node .n-k{font-size:11px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .node.agent .n-k{color:var(--brand)}
+  .node h4{margin:5px 0 4px;font-size:13.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .node p{margin:0;font-size:12px;color:var(--ink-soft)}
+  .arrow{align-self:center;color:#b8c0cd;font-size:20px;font-weight:700}
+  .legend{margin-top:14px;font-size:12px;color:var(--ink-soft);display:flex;gap:18px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .retry-note{margin-top:12px;font-size:12.5px;color:var(--ink-soft);background:#fff8ec;border:1px solid #f5e3c3;border-radius:10px;padding:10px 13px}
+
+  /* eval */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  table.score{width:100%;border-collapse:collapse;font-size:13px}
+  table.score th,table.score td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+  table.score th{font-size:11.5px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+  table.score td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .badge{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px}
+  .b-rev{background:#e8f6ee;color:#12a15a}
+  .b-draft{background:#eef0f3;color:#6b7280}
+  .dim{margin:11px 0}
+  .dim .dl{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+  .dim .dl b{font-weight:600}
+  .bar{height:9px;background:#eef0f3;border-radius:6px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:6px}
+
+  /* analysis timeline */
+  .tl{position:relative;padding-left:24px}
+  .tl::before{content:"";position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--line)}
+  .tl .step{position:relative;padding:0 0 16px 6px}
+  .tl .step::before{content:"";position:absolute;left:-21px;top:3px;width:13px;height:13px;border-radius:50%;background:#fff;border:3px solid var(--m3)}
+  .tl .step.todo::before{border-color:#cbd2dd}
+  .tl .step h4{margin:0 0 2px;font-size:14px}
+  .tl .step .ph{font-size:11px;color:var(--ink-soft);font-weight:600;letter-spacing:.04em}
+  .tl .step p{margin:2px 0 0;font-size:12.6px;color:var(--ink-soft)}
+  .tl .step .done{color:var(--good);font-weight:600}
+
+  .callout{background:#fbfbfc;border:1px dashed #d5dae2;border-radius:12px;padding:16px 18px;font-size:13px;color:var(--ink-soft)}
+  .callout b{color:var(--ink)}
+
+  .tech{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .tech span{background:#f1f4f9;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:500}
+
+  footer{margin-top:40px;text-align:center;color:var(--ink-soft);font-size:12px}
+
+  @media (max-width:840px){
+    .stats,.loop-grid{grid-template-columns:repeat(2,1fr)}
+    .two-col{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">流程管理 Agent · Process Management Agent</div>
+    <h1>AI 设计 → 上线流转 → 运行分析 → 优化反哺</h1>
+    <p class="lead">一个面向 toB 的流程闭环 Agent：从零散信息源自动设计标准化线上流程，落到薄运行时产生运行数据，再由运营分析 Agent 找堵点、出建议，反哺设计。<b style="color:#fff">不是 OA / BPM 平台</b>，而是一条围绕"流程"的数据闭环。</p>
+    <div class="loop-pill">
+      <span><b>护城河①</b> 设计 Agent + 规则 RAG + 评测</span>
+      <span><b>数据底座</b> 薄运行时（冻结）</span>
+      <span><b>护城河②</b> 运营分析 Agent</span>
+      <span><b>闭环</b> 优化反哺设计</span>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="num">4</div><div class="lbl">核心模块闭环</div><div class="sub">M1 设计 · M2 运行 · M3 分析 · M4 反哺</div></div>
+    <div class="stat"><div class="num">92.98</div><div class="lbl">评测平均分 / 100</div><div class="sub">两案例加权自动评分</div></div>
+    <div class="stat"><div class="num">2</div><div class="lbl">已跑通评测案例</div><div class="sub">EOA140 · 请假流程</div></div>
+    <div class="stat"><div class="num">7</div><div class="lbl">真实流程样例库</div><div class="sub">EOA 系列企业流程 Excel</div></div>
+  </div>
+
+  <!-- 四模块闭环 -->
+  <section>
+    <div class="sec-head"><h2>① 四模块闭环</h2><span class="kicker">项目北极星定位 · 冻结重运行时，深做设计侧与分析侧</span></div>
+    <div class="panel">
+      <div class="loop-grid">
+        <div class="mod" style="--accent:var(--m1)">
+          <div class="tag">M1 · 设计侧</div>
+          <h3>设计 Agent + 规则 RAG + 评测</h3>
+          <p>多源信息 → 标准流程 JSON，主动澄清缺失，对话式修改。</p>
+          <span class="state st-deep">深做 · 已跑通</span>
+        </div>
+        <div class="mod" style="--accent:var(--m2)">
+          <div class="tag">M2 · 数据底座</div>
+          <h3>薄运行时</h3>
+          <p>流程上线流转，产生真实/合成运行事件日志。</p>
+          <span class="state st-freeze">冻结 · 停止扩展</span>
+        </div>
+        <div class="mod" style="--accent:var(--m3)">
+          <div class="tag">M3 · 分析侧</div>
+          <h3>运营分析 Agent</h3>
+          <p>六维确定性指标 + 堵点归因 + 优化建议。</p>
+          <span class="state st-build">在建 · Phase 0–2 完成</span>
+        </div>
+        <div class="mod" style="--accent:var(--m4)">
+          <div class="tag">M4 · 闭环</div>
+          <h3>优化反哺设计</h3>
+          <p>把运行发现的堵点回写为设计侧的改进项。</p>
+          <span class="state st-build">规划中</span>
+        </div>
+      </div>
+      <div class="loop-arrow">M1 → M2 → M3 → M4 <b>↺</b> 回到 M1，形成"设计—运行—分析—反哺"闭环</div>
+    </div>
+  </section>
+
+  <!-- 设计侧工作流 -->
+  <section>
+    <div class="sec-head"><h2>② 设计侧工作流</h2><span class="kicker">LangGraph 编排 · 仅两个 Agent 节点，其余确定性</span></div>
+    <div class="panel">
+      <div class="pipe">
+        <div class="node"><div class="n-k">Deterministic</div><h4>load_case_context</h4><p>加载 raw sources 与 standard JSON</p></div>
+        <div class="arrow">→</div>
+        <div class="node agent"><div class="n-k">Agent · Bedrock Claude</div><h4>process_extraction</h4><p>从异构信息源抽取 ProcessDefinition</p></div>
+        <div class="arrow">→</div>
+        <div class="node"><div class="n-k">Deterministic</div><h4>validate_and_compare</h4><p>Pydantic 校验 + 与 standard 对比</p></div>
+        <div class="arrow">→</div>
+        <div class="node agent"><div class="n-k">Agent + Tools</div><h4>artifact_generation</h4><p>生成 Excel / draw.io 产物</p></div>
+        <div class="arrow">→</div>
+        <div class="node"><div class="n-k">Deterministic</div><h4>write_run_outputs</h4><p>输出 JSON、报告与产物清单</p></div>
+      </div>
+      <div class="retry-note">↩︎ <b>自愈回跳</b>：<code>validate_and_compare</code> 首次不通过时回跳 <code>process_extraction</code> 复查原始输入；一次后仍不通过则如实写差异报告，不硬凑。</div>
+      <div class="legend">
+        <span><i style="background:var(--brand-soft);border:1px solid #cfdcff"></i>Agent 节点（LLM）</span>
+        <span><i style="background:#fbfcfe;border:1px solid var(--line)"></i>确定性节点</span>
+        <span>产物：<b>process.json</b> · <b>process_readable.xlsx</b> · <b>.drawio 流程图</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 评测 -->
+  <section>
+    <div class="sec-head"><h2>③ 评测体系与基线</h2><span class="kicker">对人审 gold 打分 · 三维加权满分 100</span></div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="dim">
+          <div class="dl"><span>确定性流程定义</span><b>70 分</b></div>
+          <div class="bar"><i style="width:100%;background:var(--m1)"></i></div>
+          <p style="font-size:11.5px;color:var(--ink-soft);margin:6px 0 0">meta · form_fields · flow_nodes · submit_paths · attachments · roles</p>
+        </div>
+        <div class="dim">
+          <div class="dl"><span>澄清行为</span><b>20 分</b></div>
+          <div class="bar"><i style="width:28.5%;background:var(--m3)"></i></div>
+          <p style="font-size:11.5px;color:var(--ink-soft);margin:6px 0 0">命中 clarification_targets，不犯 forbidden_clarifications</p>
+        </div>
+        <div class="dim">
+          <div class="dl"><span>证据 + 护栏</span><b>10 分</b></div>
+          <div class="bar"><i style="width:14.3%;background:var(--m4)"></i></div>
+          <p style="font-size:11.5px;color:var(--ink-soft);margin:6px 0 0">evidence_map + guardrail_targets 抗噪</p>
+        </div>
+      </div>
+      <div class="panel">
+        <table class="score">
+          <thead><tr><th>案例</th><th>状态</th><th class="num">确定性/70</th><th class="num">澄清/20</th><th class="num">护栏/10</th><th class="num">总分</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>EOA140 子公司重大事项</td>
+              <td><span class="badge b-rev">human_reviewed</span></td>
+              <td class="num">65.25</td><td class="num">20.0</td><td class="num">10.0</td><td class="num" style="color:var(--good)">95.25</td>
+            </tr>
+            <tr>
+              <td>请假 leave_request</td>
+              <td><span class="badge b-draft">draft</span></td>
+              <td class="num">64.71</td><td class="num">16.0</td><td class="num">10.0</td><td class="num">90.71</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout" style="margin-top:14px">
+          <b>去硬编码是关键一役</b>：曾把案例答案焊死进 prompt（既泄漏 gold 又劫持同类新流程），已剥离为通用系统规则。请假因此 80.55 → 90.71，证明 Agent 真在抽取而非背答案。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 分析侧闭环 -->
+  <section>
+    <div class="sec-head"><h2>④ 分析侧闭环进度</h2><span class="kicker">运行数据 100% 合成 · 用两条独立路径互相校验</span></div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="tl">
+          <div class="step"><div class="ph">PHASE 0 · 数据契约</div><h4>事件日志 Schema <span class="done">✓ 已完成</span></h4><p>EventRecord / CaseRecord / ScenarioConfig / DefectSpec 落地。</p></div>
+          <div class="step"><div class="ph">PHASE 1 · 合成生成器</div><h4>事件日志生成器 <span class="done">✓ 已完成</span></h4><p>path sampler 复用运行时 condition_eval + handler_resolver；请假 v1 场景 600 实例，注入 6 类病灶。</p></div>
+          <div class="step"><div class="ph">PHASE 2 · 指标层</div><h4>六维确定性指标 <span class="done">✓ 已完成</span></h4><p>总览 / 环节 / 路径 / 人工介入 / 资源 / 发起；违规跳级用 conformance 重算而非照抄注入标签。</p></div>
+          <div class="step todo"><div class="ph">PHASE 3–5 · 待建</div><h4>归因建议 → 检出率评测 → v1/v2 闭环效能</h4><p>运营分析 Agent 出堵点归因与优化建议，评检出率，跑闭环前后对比。</p></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="callout">
+          <b>方法论洞察 —— 交叉校验挖真 bug</b><br/>
+          用"注入病灶标签 vs 独立 conformance 重算"互相核对，发现 illegal_skip 逻辑没检查审批人是否真的同意，会把合法拒绝篡改成"流程结束"。修复后两者精确对上（9/9，零假阳假阴）。<br/><br/>
+          这印证了"两条独立路径互相校验"本身就能挖出生成器真实 bug —— 后续归因/评测继续沿用此思路。
+        </div>
+        <div style="margin-top:16px">
+          <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;font-weight:600">技术栈</div>
+          <div class="tech">
+            <span>LangChain</span><span>LangGraph</span><span>AWS Bedrock · Claude</span>
+            <span>Pydantic</span><span>合成事件日志</span><span>Conformance 重算</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 冻结边界 -->
+  <section>
+    <div class="panel" style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:0 0 auto;font-size:26px">🧊</div>
+      <div style="flex:1 1 340px">
+        <h3 style="margin:0 0 6px;font-size:15px">冻结边界 · 不再往 OA 平台化方向加功能</h3>
+        <p style="margin:0;font-size:13px;color:var(--ink-soft)">
+          重运行时（<code>slice1_service</code>、<code>workflow_design_service</code>、7310 行 CDN-React SPA）已标注冻结、停止扩展，相关测试 skip。<code>app/runtime/</code> 引擎本身保留、薄做。价值集中在设计侧（护城河①）与分析侧（护城河②）两条深做主线。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    自包含单页 · 数据取自本项目 memory 与 <code>runs/eval_summary</code> · 生成于 2026-07-05
+  </footer>
+
+</div>
+</body>
+</html>

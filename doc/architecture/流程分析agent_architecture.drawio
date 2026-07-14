@@ -1,0 +1,127 @@
+<mxfile host="Electron">
+  <diagram name="第 1 页" id="Rkr_-Z-LDADp1J4TTAuw">
+    <mxGraphModel dx="2037" dy="1785" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="UezsCteLpPZbD3gO2ER3-22" edge="1" parent="1" source="UezsCteLpPZbD3gO2ER3-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;curved=1;fontFamily=Comic Sans MS;" target="UezsCteLpPZbD3gO2ER3-21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-25" connectable="0" parent="UezsCteLpPZbD3gO2ER3-22" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Comic Sans MS;" value="输入" vertex="1">
+          <mxGeometry relative="1" x="0.0473" y="2" as="geometry">
+            <mxPoint x="-17" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-17" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontFamily=Comic Sans MS;" value="用户（需求方）" vertex="1">
+          <mxGeometry height="150" width="80" x="130" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-21" parent="1" style="swimlane;startSize=0;fontFamily=Comic Sans MS;" value="" vertex="1">
+          <mxGeometry height="600" width="390" x="520" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-1" parent="UezsCteLpPZbD3gO2ER3-21" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontFamily=Comic Sans MS;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;需求文档&lt;/font&gt;" vertex="1">
+          <mxGeometry height="120" width="220" x="85" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-8" parent="UezsCteLpPZbD3gO2ER3-21" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontFamily=Comic Sans MS;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;邮件&lt;/font&gt;" vertex="1">
+          <mxGeometry height="120" width="220" x="85" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-9" parent="UezsCteLpPZbD3gO2ER3-21" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontFamily=Comic Sans MS;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;消息&lt;/font&gt;" vertex="1">
+          <mxGeometry height="120" width="220" x="85" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="GI1OH_P9S1IO7h8GKCTD-1" parent="UezsCteLpPZbD3gO2ER3-21" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontFamily=Comic Sans MS;" value="&lt;span style=&quot;font-size: 18px;&quot;&gt;会议纪要（录音、文档）&lt;/span&gt;" vertex="1">
+          <mxGeometry height="120" width="220" x="85" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-23" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontFamily=Comic Sans MS;" value="&lt;span style=&quot;font-size: 18px;&quot;&gt;最新需求&lt;/span&gt;" vertex="1">
+          <mxGeometry height="50" width="90" x="660" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-38" edge="1" parent="1" source="UezsCteLpPZbD3gO2ER3-26" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Comic Sans MS;" target="UezsCteLpPZbD3gO2ER3-37">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-39" connectable="0" parent="UezsCteLpPZbD3gO2ER3-38" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Comic Sans MS;" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;markdown文档&lt;/font&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.1644" y="3" as="geometry">
+            <mxPoint x="19" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-26" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Comic Sans MS;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;Info gather Agent&lt;/font&gt;" vertex="1">
+          <mxGeometry height="160" width="320" x="1100" y="555" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-28" edge="1" parent="1" source="UezsCteLpPZbD3gO2ER3-8" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Comic Sans MS;" target="UezsCteLpPZbD3gO2ER3-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-29" edge="1" parent="1" source="UezsCteLpPZbD3gO2ER3-9" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Comic Sans MS;" target="UezsCteLpPZbD3gO2ER3-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-30" edge="1" parent="1" source="UezsCteLpPZbD3gO2ER3-1" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Comic Sans MS;" target="UezsCteLpPZbD3gO2ER3-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-31" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=top;rounded=0;fontFamily=Comic Sans MS;" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-size: 18px;&quot;&gt;1、对接各路消息，整合内容，提炼核心要素去除重复消息，但保留细节；&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;2、消息按通用准则内各项内容要求进行排序，分类整理成相对干净内容(markdown file)&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="120" width="340" x="1100" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-36" edge="1" parent="1" source="UezsCteLpPZbD3gO2ER3-35" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Comic Sans MS;startArrow=classic;startFill=1;endArrow=none;endFill=0;" target="UezsCteLpPZbD3gO2ER3-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-47" connectable="0" parent="UezsCteLpPZbD3gO2ER3-36" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;info retrieval&lt;/font&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.36" as="geometry">
+            <mxPoint y="48" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-35" parent="1" style="swimlane;whiteSpace=wrap;html=1;fontFamily=Comic Sans MS;" value="&lt;span style=&quot;font-size: 18px; font-weight: 400;&quot;&gt;通用&lt;/span&gt;" vertex="1">
+          <mxGeometry height="200" width="1117.5" x="700" y="-50" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-13" parent="UezsCteLpPZbD3gO2ER3-35" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontFamily=Comic Sans MS;" value="&lt;span style=&quot;font-size: 18px;&quot;&gt;样例文档（xlsx）&lt;/span&gt;" vertex="1">
+          <mxGeometry height="120" width="220" x="45" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-7" parent="UezsCteLpPZbD3gO2ER3-35" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontFamily=Comic Sans MS;" value="&lt;span style=&quot;font-size: 18px;&quot;&gt;流程设计规范说明（doc）&lt;/span&gt;" vertex="1">
+          <mxGeometry height="120" width="220" x="295" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-14" parent="UezsCteLpPZbD3gO2ER3-35" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontFamily=Comic Sans MS;" value="&lt;span style=&quot;font-size: 18px;&quot;&gt;平台管理办法&lt;/span&gt;" vertex="1">
+          <mxGeometry height="120" width="220" x="535" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="GXjH06r6SihRVAEPHMD2-1" parent="UezsCteLpPZbD3gO2ER3-35" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontFamily=Comic Sans MS;" value="&lt;span style=&quot;font-size: 18px;&quot;&gt;组织架构（db）&lt;/span&gt;" vertex="1">
+          <mxGeometry height="120" width="220" x="777.5" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-37" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Comic Sans MS;" value="&lt;span style=&quot;font-size: 18px;&quot;&gt;需求分析 Agent&lt;/span&gt;" vertex="1">
+          <mxGeometry height="160" width="320" x="1690" y="555" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-45" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=top;rounded=0;fontFamily=Comic Sans MS;" value="&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-size: 18px;&quot;&gt;1、&lt;br&gt;&lt;/span&gt;" vertex="1">
+          <mxGeometry height="120" width="340" x="1680" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-54" edge="1" parent="1" source="UezsCteLpPZbD3gO2ER3-48" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" target="UezsCteLpPZbD3gO2ER3-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-55" connectable="0" parent="UezsCteLpPZbD3gO2ER3-54" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="对话：补充信息（各类型文档）" vertex="1">
+          <mxGeometry relative="1" x="-0.1972" y="36" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-48" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontFamily=Comic Sans MS;" value="用户（需求方）" vertex="1">
+          <mxGeometry height="150" width="85" x="1540" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-51" edge="1" parent="1" source="UezsCteLpPZbD3gO2ER3-37" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" target="UezsCteLpPZbD3gO2ER3-48">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1850" y="410" />
+            </Array>
+            <mxPoint x="1625" y="400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-52" connectable="0" parent="UezsCteLpPZbD3gO2ER3-51" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="对话：补充信息请求" vertex="1">
+          <mxGeometry relative="1" x="0.0588" y="2" as="geometry">
+            <mxPoint y="15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-58" parent="1" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;" value="skill" vertex="1">
+          <mxGeometry height="200" width="420" x="1040" y="1010" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-40" parent="UezsCteLpPZbD3gO2ER3-58" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fontFamily=Comic Sans MS;" value="邮件查询" vertex="1">
+          <mxGeometry height="75" width="120" x="40" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-56" parent="UezsCteLpPZbD3gO2ER3-58" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fontFamily=Comic Sans MS;" value="各类消息对接查询" vertex="1">
+          <mxGeometry height="75" width="120" x="170" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UezsCteLpPZbD3gO2ER3-57" parent="UezsCteLpPZbD3gO2ER3-58" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fontFamily=Comic Sans MS;" value="doc/xlsx/pptx" vertex="1">
+          <mxGeometry height="75" width="120" x="300" y="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

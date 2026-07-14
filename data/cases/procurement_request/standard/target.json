@@ -1,0 +1,220 @@
+{
+  "review_metadata": {
+    "review_status": "draft",
+    "reviewer": "claude_authored_pending_user_review",
+    "reviewed_at": "2026-07-11T00:00:00+00:00",
+    "review_notes": "采购申请流程演示用轻量案例：起草→采购受理→（大额）采购委员会会签→结束。不纳入 eval harness，仅用于流程管理/发起页广度展示。"
+  },
+  "deterministic_process_definition": {
+    "meta": {
+      "process_id": "PROC-001",
+      "process_name": "采购申请流程",
+      "version": "V1.0.0",
+      "responsible_dept": "采购管理中心",
+      "description": "员工发起物资/服务采购申请，经采购受理人处理，大额采购需送采购委员会会签。",
+      "applicant_scope": "公司全体在职员工",
+      "entry_point": "OA系统"
+    },
+    "form_fields": [
+      {
+        "seq": 1,
+        "field_name": "申请人",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [],
+        "component_type": "只读文本",
+        "logic_description": "自动带出当前登录人姓名，不可编辑。",
+        "default_value": "当前登录人",
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 2,
+        "field_name": "所属部门",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [],
+        "component_type": "只读文本",
+        "logic_description": "自动带出申请人所属部门，不可编辑。",
+        "default_value": "申请人所属部门",
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 3,
+        "field_name": "采购事项",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "单行文本",
+        "logic_description": "简述采购事项。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "请输入采购事项",
+        "max_length": null
+      },
+      {
+        "seq": 4,
+        "field_name": "采购金额",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "数字",
+        "logic_description": "决定审批分级：大于等于 50 万元加送采购委员会会签。",
+        "default_value": null,
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 5,
+        "field_name": "采购说明",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "多行文本",
+        "logic_description": "说明采购用途、供应商等信息。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "请输入采购说明",
+        "max_length": null
+      }
+    ],
+    "flow_nodes": [
+      {
+        "node_id": "draft",
+        "node_name": "起草",
+        "is_draft": true,
+        "handler": null,
+        "opinion": null,
+        "opinion_label": null,
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送采购受理",
+            "condition": null,
+            "target_node_id": "procurement_intake"
+          }
+        ]
+      },
+      {
+        "node_id": "procurement_intake",
+        "node_name": "采购受理",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "特定部门",
+          "role": "采购受理人",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "采购受理意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "直接结束",
+            "condition": "结论性意见=同意 且 采购金额<500000",
+            "target_node_id": "END"
+          },
+          {
+            "path_name": "送采购委员会会签",
+            "condition": "结论性意见=同意 且 采购金额>=500000",
+            "target_node_id": "procurement_committee"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      },
+      {
+        "node_id": "procurement_committee",
+        "node_name": "采购委员会会签",
+        "is_draft": false,
+        "handler": {
+          "mode": "全选-并行处理",
+          "source": "特定部门",
+          "role": "采购申请_采购委员会",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "采购委员会意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "流程结束",
+            "condition": "结论性意见=同意",
+            "target_node_id": "END"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      }
+    ],
+    "attachments": [
+      {
+        "attachment_type": "采购报价单",
+        "upload_stages": [
+          "draft"
+        ],
+        "required_stages": [
+          "draft"
+        ],
+        "required_condition": null
+      }
+    ],
+    "roles": null
+  },
+  "clarification_targets": [],
+  "accepted_optional_clarifications": [],
+  "forbidden_clarifications": [],
+  "guardrail_targets": {
+    "ignore_noise": [],
+    "offline_flow_policy": "",
+    "binary_source_policy": ""
+  },
+  "evidence_map": {},
+  "eval_weights": {}
+}

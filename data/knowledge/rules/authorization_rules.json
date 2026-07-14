@@ -1,0 +1,153 @@
+{
+  "rules": [
+    {
+      "rule_id": "auth.finance_head_for_large_expense",
+      "title": "大额报销财务审批要求",
+      "dimension": "company_policy",
+      "statement": "费用报销金额大于等于50000元的，须在部门负责人审批后增加财务初审和财务负责人审批环节。",
+      "applies_to_processes": [],
+      "applies_to_domains": [
+        "finance",
+        "expense",
+        "authorization"
+      ],
+      "applicability_condition": "金额>=50000",
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "must_have_node",
+        "params": {
+          "role_keywords": [
+            "财务负责人"
+          ],
+          "name_keywords": [
+            "财务负责人审批",
+            "财务负责人"
+          ]
+        }
+      },
+      "provenance": {
+        "source_doc": "approval_authorization_matrix",
+        "clause": "二、金额边界 第2条"
+      },
+      "severity": "high",
+      "governs": [
+        "报销金额",
+        "财务负责人",
+        "财务初审"
+      ]
+    },
+    {
+      "rule_id": "auth.procurement_committee_for_large",
+      "title": "大额采购委员会会签",
+      "dimension": "company_policy",
+      "statement": "采购金额大于等于500000元的，须送采购委员会会签。",
+      "applies_to_processes": [],
+      "applies_to_domains": [
+        "procurement",
+        "authorization"
+      ],
+      "applicability_condition": "金额>=500000",
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "must_have_node",
+        "params": {
+          "role_keywords": [
+            "采购委员会"
+          ],
+          "name_keywords": [
+            "采购委员会",
+            "会签"
+          ]
+        }
+      },
+      "provenance": {
+        "source_doc": "approval_authorization_matrix",
+        "clause": "二、金额边界 第4条"
+      },
+      "severity": "medium",
+      "governs": [
+        "采购金额",
+        "采购委员会",
+        "会签"
+      ]
+    },
+    {
+      "rule_id": "auth.legal_for_high_risk_seal",
+      "title": "高风险用印法务审核",
+      "dimension": "company_policy",
+      "statement": "涉及公司公章、合同章、法定代表人章的事项，用印申请须引入合规法律部审核。",
+      "applies_to_processes": [],
+      "applies_to_domains": [
+        "seal",
+        "legal",
+        "authorization"
+      ],
+      "applicability_condition": null,
+      "check_type": "deterministic",
+      "requirement": {
+        "kind": "must_route_through_node",
+        "params": {
+          "role_keywords": [
+            "合规",
+            "法务",
+            "法律"
+          ],
+          "name_keywords": [
+            "合规",
+            "法务",
+            "法律"
+          ],
+          "case_contexts": [
+            {
+              "印章类型": "公章"
+            },
+            {
+              "印章类型": "合同章"
+            },
+            {
+              "印章类型": "法定代表人章"
+            }
+          ],
+          "approval_context": {
+            "结论性意见": "同意"
+          }
+        }
+      },
+      "provenance": {
+        "source_doc": "approval_authorization_matrix",
+        "clause": "四、特殊事项 第1条"
+      },
+      "severity": "high",
+      "governs": [
+        "印章类型",
+        "公章",
+        "合同章",
+        "法定代表人章",
+        "法务",
+        "合规"
+      ]
+    },
+    {
+      "rule_id": "auth.recusal_no_same_actor_adjacent",
+      "title": "审批链路同人回避",
+      "dimension": "company_policy",
+      "statement": "授权链路中连续两个环节不应解析为同一审批人，避免同人连续审批架空审批链。",
+      "applies_to_processes": [],
+      "applies_to_domains": [
+        "authorization"
+      ],
+      "applicability_condition": null,
+      "check_type": "llm_judge",
+      "requirement": null,
+      "provenance": {
+        "source_doc": "approval_authorization_matrix",
+        "clause": "五、回避要求"
+      },
+      "severity": "medium",
+      "trigger_attributes": [
+        "handler",
+        "submit_paths"
+      ]
+    }
+  ]
+}

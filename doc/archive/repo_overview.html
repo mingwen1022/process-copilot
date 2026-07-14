@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Process Management Agent - Repo Overview</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #18212f;
+      --muted: #5f6b7a;
+      --line: #d7dee8;
+      --blue: #2458a6;
+      --green: #217a52;
+      --amber: #9a6400;
+      --red: #b42318;
+      --code: #101828;
+      --soft-blue: #eaf1ff;
+      --soft-green: #e9f7ef;
+      --soft-amber: #fff4d6;
+      --soft-red: #fdecec;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 34px 42px 28px;
+      border-bottom: 4px solid #2f6fed;
+    }
+
+    header h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    header p {
+      max-width: 980px;
+      margin: 0;
+      color: #d7dee8;
+      font-size: 15px;
+    }
+
+    .top-nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .top-nav a {
+      color: #eaf1ff;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .top-nav a:hover {
+      background: rgba(255,255,255,0.14);
+    }
+
+    main {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+      line-height: 1.3;
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      font-size: 16px;
+    }
+
+    p { margin: 8px 0; }
+
+    .muted { color: var(--muted); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+
+    .card {
+      grid-column: span 4;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .card h3 {
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: #fff;
+      white-space: nowrap;
+    }
+
+    .pill.blue { color: var(--blue); background: var(--soft-blue); border-color: #bed0f7; }
+    .pill.green { color: var(--green); background: var(--soft-green); border-color: #b9e4cf; }
+    .pill.amber { color: var(--amber); background: var(--soft-amber); border-color: #f0d58a; }
+    .pill.red { color: var(--red); background: var(--soft-red); border-color: #f3b6b6; }
+
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    code {
+      color: var(--code);
+      background: #eef2f7;
+      border: 1px solid #dde5ee;
+      padding: 1px 5px;
+      border-radius: 5px;
+      font-size: 0.92em;
+    }
+
+    pre {
+      margin: 12px 0 0;
+      padding: 14px;
+      background: #0f172a;
+      color: #dbeafe;
+      border-radius: 8px;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f2f5f9;
+      font-weight: 650;
+    }
+
+    ul {
+      margin: 8px 0 0 20px;
+      padding: 0;
+    }
+
+    li { margin: 5px 0; }
+
+    .tree {
+      white-space: pre;
+      overflow: auto;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .flow-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+      padding: 12px;
+    }
+
+    svg text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      fill: #111827;
+      font-size: 13px;
+    }
+
+    .node rect {
+      fill: #fff;
+      stroke: #9aa8ba;
+      stroke-width: 1.4;
+      rx: 8;
+    }
+
+    .node.agent rect { fill: #eaf1ff; stroke: #2f6fed; }
+    .node.validator rect { fill: #fff4d6; stroke: #c98a00; }
+    .node.io rect { fill: #e9f7ef; stroke: #217a52; }
+    .edge { stroke: #667085; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+    .edge.retry { stroke: #b42318; stroke-dasharray: 5 4; }
+    .edge.skip { stroke: #7a5b00; stroke-dasharray: 4 4; }
+    .edge-label { font-size: 12px; fill: #475467; }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .callout {
+      border-left: 4px solid var(--blue);
+      background: #f4f8ff;
+      padding: 12px 14px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+      padding: 10px 4px 24px;
+    }
+
+    @media (max-width: 860px) {
+      header { padding: 26px 22px; }
+      main { padding: 18px; }
+      .card { grid-column: span 12; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="top-nav" aria-label="文档导航">
+      <a href="repo_overview.html">Repo Overview</a>
+      <a href="http://127.0.0.1:8001/">统一 App</a>
+      <a href="../prototypes/flow_ai_design_demo.html">当前 HTML Demo</a>
+      <a href="../prototypes/runtime_sandbox_demo.html">运行沙盒 Demo</a>
+      <a href="../product/runtime_product_plan.html">运行沙盒方案</a>
+    </nav>
+    <h1>流程设计 Agent V1 - Repo Overview</h1>
+    <p>
+      当前仓库用于把多份模拟 raw source 文本整合为企业 OA 流程标准定义，
+      再生成 JSON、可读 Excel、draw.io 流程图和缺失/差异报告。
+    </p>
+  </header>
+
+  <main>
+    <section>
+      <h2>1. 项目定位</h2>
+      <div class="grid">
+        <div class="card">
+          <h3><span class="pill blue">Input</span> 原始输入</h3>
+          <p>每个流程 case 下有 5 份 <code>raw_sources/*.txt</code>，模拟需求文档、邮件、群聊、会议纪要等零散来源。</p>
+        </div>
+        <div class="card">
+          <h3><span class="pill green">Core</span> 标准化输出</h3>
+          <p>核心输出是符合 Pydantic <code>ProcessDefinition</code> 的 <code>process_def.json</code>。</p>
+        </div>
+        <div class="card">
+          <h3><span class="pill amber">Artifacts</span> 可读产物</h3>
+          <p>Artifact agent 调用 Excel skill 和 draw.io tool，生成 <code>process_readable.xlsx</code> 与 <code>process_flow.drawio</code>。</p>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>重要边界：</strong><code>data/*/standard/*.json</code> 只用于最终 eval 对比，不参与 runtime prompt、validation 或 routing。
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 当前目录结构</h2>
+      <div class="tree">process_management_agent/
+├── app/
+│   ├── agents/
+│   │   ├── process_extraction.py       # 从 raw sources 抽取 ProcessDefinition
+│   │   ├── business_validation.py      # 基于 raw sources 审核候选输出的业务完整性
+│   │   └── artifact_generation.py      # 生成 Excel / draw.io 的 agent 与 tools
+│   ├── workflows/
+│   │   ├── process_v1.py               # LangGraph 主工作流与 CLI
+│   │   └── state.py                    # WorkflowState 定义
+│   ├── models/
+│   │   ├── bedrock.py                  # ChatBedrockConverse factory
+│   │   └── text.py                     # LangChain/legacy text model 适配
+│   ├── tools/
+│   │   └── artifact_tools.py           # draw.io 生成、XML 提取与校验
+│   ├── reporting/
+│   │   └── comparison.py               # standard eval 对比与 missing report
+│   ├── dataset_validation.py           # 数据集结构与 standard JSON 校验
+│   ├── io_utils.py                     # raw/standard/process JSON 读写工具
+│   └── tracing.py                      # LangChain messages/tool calls 序列化
+├── data/
+│   ├── schema/process_schema.py        # V1 标准 ProcessDefinition Pydantic schema
+│   ├── 01_leave_request/
+│   ├── 02_expense_claim/
+│   ├── 03_seal_application/
+│   └── 04_procurement_request/
+├── doc/
+│   ├── product/                        # 产品方案、PRD、项目计划
+│   ├── prototypes/                     # HTML 原型与历史 demo
+│   ├── references/                     # 业务样例、制度、要素管理参考
+│   ├── architecture/                   # 架构图与流程图
+│   └── repo/                           # 仓库说明文档
+├── runs/                               # 每次 workflow run 的输出目录
+├── scripts/
+│   ├── validate_dataset.py
+│   └── bedrock_llm_test.py
+├── tests/
+├── pyproject.toml
+└── README.md</div>
+    </section>
+
+    <section>
+      <h2>3. 当前 LangGraph 工作流</h2>
+      <div class="flow-wrap">
+        <svg width="1120" height="390" viewBox="0 0 1120 390" role="img" aria-label="LangGraph workflow">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L9,3 z" fill="#667085"></path>
+            </marker>
+          </defs>
+
+          <g class="node io" transform="translate(40 80)">
+            <rect width="170" height="58"></rect>
+            <text x="85" y="25" text-anchor="middle">load_case_context</text>
+            <text x="85" y="43" text-anchor="middle" fill="#475467">读取 raw sources</text>
+          </g>
+
+          <g class="node agent" transform="translate(260 80)">
+            <rect width="190" height="58"></rect>
+            <text x="95" y="25" text-anchor="middle">process_extraction_agent</text>
+            <text x="95" y="43" text-anchor="middle" fill="#475467">抽取标准 JSON</text>
+          </g>
+
+          <g class="node validator" transform="translate(500 80)">
+            <rect width="170" height="58"></rect>
+            <text x="85" y="25" text-anchor="middle">structural_validator</text>
+            <text x="85" y="43" text-anchor="middle" fill="#475467">结构/引用校验</text>
+          </g>
+
+          <g class="node agent" transform="translate(720 80)">
+            <rect width="190" height="58"></rect>
+            <text x="95" y="25" text-anchor="middle">business_validation_agent</text>
+            <text x="95" y="43" text-anchor="middle" fill="#475467">业务语义审核</text>
+          </g>
+
+          <g class="node agent" transform="translate(720 230)">
+            <rect width="190" height="58"></rect>
+            <text x="95" y="25" text-anchor="middle">artifact_generation_agent</text>
+            <text x="95" y="43" text-anchor="middle" fill="#475467">Excel / draw.io</text>
+          </g>
+
+          <g class="node io" transform="translate(960 230)">
+            <rect width="130" height="58"></rect>
+            <text x="65" y="25" text-anchor="middle">write_run_outputs</text>
+            <text x="65" y="43" text-anchor="middle" fill="#475467">写报告/manifest</text>
+          </g>
+
+          <path class="edge" d="M210 109 L252 109"></path>
+          <path class="edge" d="M450 109 L492 109"></path>
+          <path class="edge" d="M670 109 L712 109"></path>
+          <text class="edge-label" x="675" y="95">business_validation</text>
+
+          <path class="edge" d="M815 138 L815 222"></path>
+          <text class="edge-label" x="826" y="184">generate_artifacts</text>
+
+          <path class="edge" d="M910 259 L952 259"></path>
+
+          <path class="edge retry" d="M585 138 C585 185 350 185 350 146"></path>
+          <text class="edge-label" x="438" y="177">retry_extraction</text>
+
+          <path class="edge retry" d="M720 109 C620 28 360 28 350 72"></path>
+          <text class="edge-label" x="485" y="42">retry_extraction</text>
+
+          <path class="edge skip" d="M670 120 C800 170 940 180 1015 222"></path>
+          <text class="edge-label" x="800" y="160">write_outputs</text>
+
+          <path class="edge skip" d="M910 120 C985 150 1020 180 1025 222"></path>
+          <text class="edge-label" x="965" y="165">write_outputs</text>
+        </svg>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>节点</th>
+            <th>类型</th>
+            <th>核心职责</th>
+            <th>主要输出</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>load_case_context</code></td>
+            <td>function node</td>
+            <td>读取 case 目录，拼接 <code>raw_sources</code> 为上下文。</td>
+            <td><code>raw_sources</code>, <code>source_context</code>, <code>case_id</code></td>
+          </tr>
+          <tr>
+            <td><code>process_extraction_agent</code></td>
+            <td>agent node</td>
+            <td>调用 Bedrock Claude，用 structured output 抽取 <code>ProcessDefinition</code>；解析失败时做一次格式 repair。</td>
+            <td><code>candidate_process</code>, <code>llm_raw_output</code>, <code>messages*.json</code></td>
+          </tr>
+          <tr>
+            <td><code>structural_validator</code></td>
+            <td>function node</td>
+            <td>Pydantic 兜底校验、提交路径 target 引用、字段/附件环节引用合法性。</td>
+            <td><code>schema_validation_report.json</code>, routing state</td>
+          </tr>
+          <tr>
+            <td><code>business_validation_agent</code></td>
+            <td>agent node + deterministic routing wrapper</td>
+            <td>看 raw sources 与候选 JSON，判断大块缺失、明显遗漏、无依据编造；用 <code>found_in_raw</code> 决定是否回抽取。</td>
+            <td><code>business_validation_report.json</code>, <code>validation_feedback</code></td>
+          </tr>
+          <tr>
+            <td><code>artifact_generation_agent</code></td>
+            <td>agent node with tools</td>
+            <td>调用 Excel skill tool 和 draw.io XML tool，生成可读产物。</td>
+            <td><code>process_readable.xlsx</code>, <code>process_flow.drawio</code>, artifact report</td>
+          </tr>
+          <tr>
+            <td><code>write_run_outputs</code></td>
+            <td>function node</td>
+            <td>写最终 JSON、runtime reports、eval reports 和 output manifest。</td>
+            <td><code>process_def.json</code>, <code>comparison_report.json</code>, <code>missing_report.md</code>, <code>output_manifest.json</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>4. 核心功能清单</h2>
+      <div class="two-col">
+        <div>
+          <h3>抽取与校验</h3>
+          <ul>
+            <li>从本地 <code>.txt</code> raw sources 合成标准 <code>ProcessDefinition</code>。</li>
+            <li>使用 <code>ChatBedrockConverse.with_structured_output</code> 做 schema 约束。</li>
+            <li>结构错误或引用错误可回到 extraction agent 复查一次。</li>
+            <li>业务校验 agent 不看 standard，只基于 raw sources 举证。</li>
+            <li>业务 blocking 且 <code>found_in_raw</code> 时回 extraction；<code>not_found_in_raw</code> 时输出缺失报告。</li>
+          </ul>
+        </div>
+        <div>
+          <h3>产物生成</h3>
+          <ul>
+            <li>Excel 由 artifact agent 读取外部 <code>xlsx/SKILL.md</code>，让 LLM 动态生成 Python 脚本。</li>
+            <li>Excel 生成后会检查 workbook 内容、错误单元格、术语和环节展示方式。</li>
+            <li>draw.io 由 LLM 直接生成 XML，并校验 <code>mxfile</code> / <code>diagram</code> / <code>mxGraphModel</code>。</li>
+            <li>draw.io 生成要求字体颜色为黑色，便于在深色/浅色背景中阅读。</li>
+            <li>每次 run 按节点目录保存 raw output、messages、校验报告和产物。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. 标准 Schema 范围</h2>
+      <p>V1 标准模型定义在 <code>data/schema/process_schema.py</code>。顶层对象是 <code>ProcessDefinition</code>：</p>
+      <table>
+        <thead>
+          <tr>
+            <th>模块</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>meta</code></td>
+            <td>流程编号、流程名称、版本、责任部门、描述、适用范围、入口。</td>
+          </tr>
+          <tr>
+            <td><code>form_fields</code></td>
+            <td>字段序号、字段名、必填/可见/可编辑环节、组件类型、逻辑说明、默认值、选项、长度等。</td>
+          </tr>
+          <tr>
+            <td><code>flow_nodes</code></td>
+            <td>审批环节、处理人配置、意见配置、限时、提交路径和路径条件。</td>
+          </tr>
+          <tr>
+            <td><code>attachments</code></td>
+            <td>附件类型、上传环节、必传环节。</td>
+          </tr>
+          <tr>
+            <td><code>roles</code></td>
+            <td>流程角色/业务角色、挂接人员、所属部门。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>6. 数据集与评估基准</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>raw sources</th>
+            <th>standard artifacts</th>
+            <th>业务特点</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>01_leave_request</code></td>
+            <td>5 个 txt</td>
+            <td>JSON / XLSX / draw.io / Mermaid</td>
+            <td>员工请假申请，含天数条件和逐级审批。</td>
+          </tr>
+          <tr>
+            <td><code>02_expense_claim</code></td>
+            <td>5 个 txt</td>
+            <td>JSON / XLSX / draw.io</td>
+            <td>费用报销，金额边界与财务审批路径分叉。</td>
+          </tr>
+          <tr>
+            <td><code>03_seal_application</code></td>
+            <td>5 个 txt</td>
+            <td>JSON / XLSX / draw.io</td>
+            <td>用印申请，按印章类型进入不同审核链路。</td>
+          </tr>
+          <tr>
+            <td><code>04_procurement_request</code></td>
+            <td>5 个 txt</td>
+            <td>JSON / XLSX / draw.io</td>
+            <td>采购申请，涉及采购金额、委员会会签和双方确认。</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="muted">standard 文件只在最终 eval 阶段通过 <code>app/reporting/comparison.py</code> 对比，不进入运行时 agent prompt。</p>
+    </section>
+
+    <section>
+      <h2>7. 运行与配置</h2>
+      <h3>运行单个 case</h3>
+      <pre>uv run python -m app.workflows.process_v1 --case data/01_leave_request --out runs/01_leave_request --verbose</pre>
+      <p>默认会给 <code>--out</code> 目录追加时间戳；如需固定输出目录，可加 <code>--no-timestamp</code>。</p>
+
+      <h3>校验数据集</h3>
+      <pre>uv run python scripts/validate_dataset.py</pre>
+
+      <h3>运行测试</h3>
+      <pre>uv run pytest</pre>
+
+      <h3>Bedrock 环境变量</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>变量</th>
+            <th>用途</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>BEDROCK_MODEL_ID</code></td>
+            <td>Claude Sonnet 模型 ID，传入 <code>ChatBedrockConverse(model=...)</code>。</td>
+          </tr>
+          <tr>
+            <td><code>AWS_REGION</code> / <code>AWS_DEFAULT_REGION</code></td>
+            <td>Bedrock region。</td>
+          </tr>
+          <tr>
+            <td><code>AWS_BEARER_TOKEN_BEDROCK</code></td>
+            <td>单个 Bedrock API key，不使用 AWS access key / secret key。</td>
+          </tr>
+          <tr>
+            <td><code>BEDROCK_MAX_TOKENS</code>, <code>BEDROCK_TEMPERATURE</code></td>
+            <td>可选模型生成参数。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>8. Run 输出目录约定</h2>
+      <div class="tree">runs/&lt;case&gt;_&lt;timestamp&gt;/
+├── load_case_context/
+│   ├── raw_sources.json
+│   └── source_context.txt
+├── process_extraction_agent/
+│   ├── llm_raw_output.txt
+│   ├── llm_raw_output_attempt_*.txt
+│   ├── messages_attempt_*.json
+│   └── process_def.json
+├── structural_validator/
+│   ├── schema_validation_report.json
+│   ├── schema_validation_report_attempt_*.json
+│   └── route_attempt_*.json
+├── business_validation_agent/
+│   ├── business_validation_report.json
+│   ├── business_validation_raw_output.txt
+│   ├── messages_attempt_*.json
+│   └── route_attempt_*.json
+├── artifact_generation_agent/
+│   ├── messages.json
+│   ├── artifact_report.json
+│   ├── xlsx/
+│   │   ├── process_readable.xlsx
+│   │   ├── xlsx_agent_generated.py
+│   │   └── xlsx_skill_report.json
+│   └── drawio/
+│       ├── process_flow.drawio
+│       └── drawio_validation_report.json
+├── eval/
+│   ├── comparison_report.json
+│   ├── missing_report.md
+│   └── standard_process.json
+├── write_run_outputs/
+│   └── output_manifest.json
+└── output_manifest.json</div>
+    </section>
+
+    <section>
+      <h2>9. 测试覆盖</h2>
+      <ul>
+        <li><code>tests/test_workflow_process_v1.py</code>：graph 节点、条件边、runtime retry、business validation 路由、输出目录。</li>
+        <li><code>tests/test_artifact_tools.py</code>：Excel skill codegen、workbook 内容校验、draw.io XML 校验、黑色字体要求。</li>
+        <li><code>tests/test_bedrock_model.py</code>：Bedrock 配置、API key、ChatBedrockConverse factory。</li>
+        <li><code>tests/test_dataset_validation.py</code>：4 组数据集 standard JSON、raw source 数量、路径引用合法性。</li>
+        <li><code>tests/test_comparison.py</code>：缺失字段、路径条件差异、report 渲染。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>10. 当前设计约束</h2>
+      <ul>
+        <li>V1 不引入 MCP runtime；本地 xlsx skill 是 prompt/指令资产，由 artifact agent 的 tool 内部读取。</li>
+        <li>Excel 和 draw.io 不是 graph 节点，而是 <code>artifact_generation_agent</code> 的 tools。</li>
+        <li>业务 validator 只看 raw 和候选输出，不看 standard。</li>
+        <li>LLM 不直接控制 graph next node；条件路由由确定性 Python 函数根据结构化结果计算。</li>
+        <li>如果 raw 本身缺信息，系统不编造，输出缺失报告供人工补 raw data。</li>
+      </ul>
+    </section>
+
+    <div class="footer">
+      Generated for local repo overview. Current workflow graph image: <code>runs/graph/process_v1_langgraph_20260521_022156.png</code>
+    </div>
+  </main>
+</body>
+</html>

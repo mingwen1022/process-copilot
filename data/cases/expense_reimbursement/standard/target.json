@@ -1,0 +1,436 @@
+{
+  "review_metadata": {
+    "review_status": "draft",
+    "reviewer": "claude_authored_pending_user_review",
+    "reviewed_at": "2026-07-11T00:00:00+00:00",
+    "review_notes": "费用报销演示案例：按报销总额分级审批 + 差旅住宿超标需情况说明。本 target 由 AI 设计模拟 source 后给出，作为演示用 gold；待用户复核定稿后将 review_status 改为 human_reviewed。严肃评测仍以 EOA140 真实案例为准。"
+  },
+  "deterministic_process_definition": {
+    "meta": {
+      "process_id": "EXPENSE-001",
+      "process_name": "费用报销流程",
+      "version": "V1.0.0",
+      "responsible_dept": "计划财务部",
+      "description": "员工发起各类费用（差旅/招待/办公用品/培训）报销申请，经部门主管审批后，按报销总额是否达到大额门槛决定是否加送财务初审与财务负责人审批；差旅住宿超公司标准需附情况说明。",
+      "applicant_scope": "公司全体在职员工",
+      "entry_point": "OA系统"
+    },
+    "form_fields": [
+      {
+        "seq": 1,
+        "field_name": "报销人",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [],
+        "component_type": "只读文本",
+        "logic_description": "自动带出当前登录人姓名，不可编辑。",
+        "default_value": "当前登录人",
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 2,
+        "field_name": "所属部门",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [],
+        "component_type": "只读文本",
+        "logic_description": "自动带出报销人所属部门，不可编辑。",
+        "default_value": "报销人所属部门",
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 3,
+        "field_name": "费用类型",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "下拉单选",
+        "logic_description": "固定四类；选择差旅费时建议填写出差城市与酒店每晚，供差旅标准比对。",
+        "default_value": null,
+        "options": [
+          "差旅费",
+          "招待费",
+          "办公用品",
+          "培训费"
+        ],
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 4,
+        "field_name": "出差城市",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "下拉单选",
+        "logic_description": "仅差旅费类型需要填写，用于判断适用一线/非一线住宿标准。",
+        "default_value": null,
+        "options": [
+          "一线",
+          "非一线"
+        ],
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 5,
+        "field_name": "酒店每晚",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "数字",
+        "logic_description": "仅差旅费类型需要填写，单位：元/晚，用于差旅标准比对（非一线≤800，一线≤1000，超标需附情况说明）。",
+        "default_value": null,
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 6,
+        "field_name": "费用明细",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "多行文本",
+        "logic_description": "逐项列出费用项目、发生日期、金额，各项之和应与报销总额一致。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "如：7/1 机票 2000 元；7/1-7/3 酒店 3 晚 2400 元",
+        "max_length": null
+      },
+      {
+        "seq": 7,
+        "field_name": "报销总额",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "数字",
+        "logic_description": "决定审批分级：小于 50000 元部门主管审批后直接结束；大于等于 50000 元加送财务初审与财务负责人审批。",
+        "default_value": null,
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 8,
+        "field_name": "收款账户",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "单行文本",
+        "logic_description": "报销款项到账的银行账户。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "请输入收款银行账户",
+        "max_length": null
+      },
+      {
+        "seq": 9,
+        "field_name": "报销事由",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "多行文本",
+        "logic_description": "简述报销事由。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "请输入报销事由",
+        "max_length": null
+      }
+    ],
+    "flow_nodes": [
+      {
+        "node_id": "draft",
+        "node_name": "起草",
+        "is_draft": true,
+        "handler": null,
+        "opinion": null,
+        "opinion_label": null,
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送部门主管审批",
+            "condition": null,
+            "target_node_id": "dept_manager_approve"
+          }
+        ]
+      },
+      {
+        "node_id": "dept_manager_approve",
+        "node_name": "部门主管审批",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "本部门",
+          "role": "部门主管",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "部门主管意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "直接结束",
+            "condition": "结论性意见=同意 且 报销总额<50000",
+            "target_node_id": "END"
+          },
+          {
+            "path_name": "送财务初审",
+            "condition": "结论性意见=同意 且 报销总额>=50000",
+            "target_node_id": "finance_review"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      },
+      {
+        "node_id": "finance_review",
+        "node_name": "财务初审",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "特定部门",
+          "role": "费用报销_财务初审",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "财务初审意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送财务负责人审批",
+            "condition": "结论性意见=同意",
+            "target_node_id": "finance_lead_approve"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      },
+      {
+        "node_id": "finance_lead_approve",
+        "node_name": "财务负责人审批",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "特定部门",
+          "role": "费用报销_财务负责人",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "财务负责人意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "流程结束",
+            "condition": "结论性意见=同意",
+            "target_node_id": "END"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      }
+    ],
+    "attachments": [
+      {
+        "attachment_type": "发票",
+        "upload_stages": [
+          "draft"
+        ],
+        "required_stages": [
+          "draft"
+        ],
+        "required_condition": null
+      },
+      {
+        "attachment_type": "情况说明",
+        "upload_stages": [
+          "draft"
+        ],
+        "required_stages": [],
+        "required_condition": "(出差城市∉一线 且 酒店每晚>800) 或 (出差城市=一线 且 酒店每晚>1000)"
+      }
+    ],
+    "roles": null
+  },
+  "clarification_targets": [
+    {
+      "id": "clarify_travel_overrun_handling",
+      "question": "差旅住宿超公司标准（非一线>800/晚、一线>1000/晚）时，应附情况说明、直接拦下不让提交，还是升级给更高一级审批？",
+      "expected_topic": "差旅超标的处理方式未定（附说明/硬拦/升级审批）",
+      "severity": "blocking",
+      "evidence": [
+        "06_上线问题清单_待确认.csv",
+        "04_群聊记录_差旅标准与超标讨论.txt"
+      ],
+      "acceptable_options": [
+        "超标需附情况说明，不阻断提交",
+        "超标直接拦下不允许提交",
+        "超标升级到部门总经理审批",
+        "暂不处理，作为发布前待确认项保留"
+      ],
+      "must_reference_evidence": [
+        "06_上线问题清单_待确认.csv"
+      ],
+      "expected_question_contains": ["差旅", "超标", "审批"]
+    },
+    {
+      "id": "clarify_large_amount_threshold",
+      "question": "大额报销加送财务初审+财务负责人审批的金额门槛具体是多少？源文档里给的是区间还是确切数字？",
+      "expected_topic": "大额报销分级门槛的确切数值未最终确认",
+      "severity": "blocking",
+      "evidence": [
+        "03_费用报销字段与审批权限矩阵.xlsx",
+        "06_上线问题清单_待确认.csv"
+      ],
+      "must_reference_evidence": [
+        "03_费用报销字段与审批权限矩阵.xlsx"
+      ],
+      "expected_question_contains": ["大额", "门槛", "财务"]
+    },
+    {
+      "id": "clarify_expense_detail_granularity",
+      "question": "费用明细是否需要逐项录入（项目/日期/金额），还是只需填报销总额？",
+      "expected_topic": "费用明细录入粒度未明确",
+      "severity": "warning",
+      "evidence": [
+        "06_上线问题清单_待确认.csv"
+      ],
+      "expected_question_contains": ["费用明细", "逐项", "总额"]
+    }
+  ],
+  "accepted_optional_clarifications": [
+    "报销总额是否需要与费用明细各项之和做一致性校验，可以提问，但不影响主流程结构。"
+  ],
+  "forbidden_clarifications": [
+    "不要追问费用类型的固定四类之外是否还有其它类型（已明确固定为四类）。",
+    "不要把差旅申请（出差前审批）纳入本报销流程（明确是报销，事后走款）。",
+    "不要把年会预算、部门团建报销以外的无关通知当作本流程的节点或字段。"
+  ],
+  "guardrail_targets": {
+    "ignore_noise": [
+      "年会预算",
+      "部门团建通知",
+      "季度述职"
+    ],
+    "offline_flow_policy": "旧纸质报销单/台账扫描件（png/pdf）仅为历史背景，即使被视觉转录也不作为线上节点或口径依据。",
+    "binary_source_policy": "图片截图由视觉模型忠实转录进上下文（含群聊截图等真实信号）；扫描 PDF 无文字层时输出 requires_ocr warning；转录只搬运不推断，'仅参考'类线下件仍受线下参考护栏约束。"
+  },
+  "evidence_map": {
+    "meta": [
+      "01_费用报销流程需求汇总_计划财务部.docx"
+    ],
+    "form_fields": [
+      "03_费用报销字段与审批权限矩阵.xlsx",
+      "01_费用报销流程需求汇总_计划财务部.docx"
+    ],
+    "flow_nodes": [
+      "01_费用报销流程需求汇总_计划财务部.docx",
+      "03_费用报销字段与审批权限矩阵.xlsx"
+    ],
+    "submit_paths": [
+      "01_费用报销流程需求汇总_计划财务部.docx",
+      "03_费用报销字段与审批权限矩阵.xlsx",
+      "04_群聊记录_差旅标准与超标讨论.txt"
+    ],
+    "attachments": [
+      "02_差旅费报销标准.md",
+      "05_移动端与附件角色说明.md",
+      "06_上线问题清单_待确认.csv"
+    ],
+    "clarifications": [
+      "06_上线问题清单_待确认.csv",
+      "04_群聊记录_差旅标准与超标讨论.txt",
+      "03_费用报销字段与审批权限矩阵.xlsx"
+    ],
+    "guardrails": [
+      "07_噪音_年会预算与团建通知.txt",
+      "04_群聊记录_差旅标准与超标讨论.txt"
+    ]
+  },
+  "eval_weights": {
+    "meta": 5,
+    "form_fields": 25,
+    "flow_nodes": 10,
+    "submit_paths": 25,
+    "attachments": 10,
+    "roles": 2,
+    "clarifications": 20,
+    "evidence_guardrail": 3
+  }
+}

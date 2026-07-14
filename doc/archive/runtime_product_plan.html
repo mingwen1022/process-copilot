@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>流程运行沙盒与组织规则方案</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #637083;
+      --line: #d8e0ea;
+      --blue: #2458a6;
+      --green: #237a56;
+      --amber: #9a6500;
+      --red: #b42318;
+      --purple: #6842c2;
+      --soft-blue: #eaf1ff;
+      --soft-green: #e8f6ef;
+      --soft-amber: #fff4d6;
+      --soft-red: #fdecec;
+      --soft-purple: #f0ebff;
+      --code: #0f172a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.58;
+      letter-spacing: 0;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 26px 38px 28px;
+      border-bottom: 4px solid #2f6fed;
+    }
+
+    .top-nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .top-nav a {
+      color: #eaf1ff;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    header h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.2;
+    }
+
+    header p {
+      margin: 0;
+      max-width: 1060px;
+      color: #d7dee8;
+      font-size: 15px;
+    }
+
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 21px;
+      line-height: 1.3;
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      font-size: 16px;
+    }
+
+    p { margin: 8px 0; }
+
+    .muted { color: var(--muted); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+
+    .card {
+      grid-column: span 4;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .card.wide { grid-column: span 6; }
+    .card.full { grid-column: 1 / -1; }
+
+    .card h3 {
+      margin-top: 0;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 1px 9px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .pill.blue { color: var(--blue); background: var(--soft-blue); border-color: #bed0f7; }
+    .pill.green { color: var(--green); background: var(--soft-green); border-color: #b9e4cf; }
+    .pill.amber { color: var(--amber); background: var(--soft-amber); border-color: #f0d58a; }
+    .pill.red { color: var(--red); background: var(--soft-red); border-color: #f3b6b6; }
+    .pill.purple { color: var(--purple); background: var(--soft-purple); border-color: #d6c8ff; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f2f5f9;
+      font-weight: 700;
+    }
+
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    code {
+      color: var(--code);
+      background: #eef2f7;
+      border: 1px solid #dde5ee;
+      padding: 1px 5px;
+      border-radius: 5px;
+      font-size: 0.92em;
+    }
+
+    pre {
+      margin: 12px 0 0;
+      padding: 14px;
+      background: #0f172a;
+      color: #dbeafe;
+      border-radius: 8px;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    ul, ol {
+      margin: 8px 0 0 20px;
+      padding: 0;
+    }
+
+    li { margin: 5px 0; }
+
+    .callout {
+      border-left: 4px solid var(--blue);
+      background: #f4f8ff;
+      padding: 12px 14px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .callout.amber { border-left-color: var(--amber); background: #fff8e8; }
+
+    .flow {
+      display: grid;
+      gap: 10px;
+      overflow-x: auto;
+    }
+
+    .flow-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(160px, 1fr));
+      gap: 10px;
+      min-width: 860px;
+    }
+
+    .flow-step {
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 96px;
+    }
+
+    .flow-step strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .tree {
+      white-space: pre;
+      overflow: auto;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+      padding: 10px 4px 24px;
+    }
+
+    @media (max-width: 900px) {
+      header { padding: 24px 20px; }
+      main { padding: 18px; }
+      .card, .card.wide { grid-column: span 12; }
+      .flow-row { grid-template-columns: 1fr; min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="top-nav" aria-label="文档导航">
+      <a href="../repo/repo_overview.html">Repo Overview</a>
+      <a href="http://127.0.0.1:8001/">统一 App</a>
+      <a href="../prototypes/flow_ai_design_demo.html">当前 HTML Demo</a>
+      <a href="../prototypes/runtime_sandbox_demo.html">运行沙盒 Demo</a>
+      <a href="runtime_product_plan.html">运行沙盒方案</a>
+    </nav>
+    <h1>V2 迭代方案 - 组织规则驱动的流程运行沙盒</h1>
+    <p>
+      目标是在现有流程设计 Agent 之上，增加虚拟券商组织架构、规则知识库和简易审批运行时，
+      验证 <code>ProcessDefinition</code> 是否能够驱动可发起、可审批、可流转、可回放的实际流程。
+    </p>
+  </header>
+
+  <main>
+    <section>
+      <h2>1. 研究结论与产品判断</h2>
+      <div class="grid">
+        <div class="card">
+          <h3><span class="pill blue">组织</span> 券商组织模拟</h3>
+          <p>
+            证券公司前台通常按客户或业务类型设置，例如零售/经纪、财富管理、机构业务、投资银行、
+            证券投资、资产管理等；管理控制部门包括风险管理、法律合规、审计/稽核，后台包括人力、IT、办公室等。
+          </p>
+          <p class="muted">设计上应模拟业务条线、部门、分支机构和三道防线，而不是只做单层部门列表。</p>
+        </div>
+        <div class="card">
+          <h3><span class="pill green">运行</span> 先自建轻量运行时</h3>
+          <p>
+            飞书审批有完整用户侧体验和外部审批能力，但 API 创建审批定义存在平台约束，例如官方说明 API 方式不支持设置条件分支。
+            当前更适合先做本地运行沙盒，后续再做飞书 adapter。
+          </p>
+          <p class="muted">先验证流程定义语义，再考虑企业平台集成。</p>
+        </div>
+        <div class="card">
+          <h3><span class="pill amber">知识</span> RAG 约束设计</h3>
+          <p>
+            规则、制度、授权矩阵、组织架构应进入检索层。LangChain 的 RAG 模式把索引和运行时检索分开，
+            LangGraph 可扩展为 agentic RAG，让模型决定何时检索。
+          </p>
+          <p class="muted">流程设计不只看 raw source，还要看公司规则和组织上下文。</p>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>产品方向：</strong>
+        V2 不做完整 OA，也不直接接入飞书或 BPMN 引擎。先做“流程运行沙盒”，用虚拟组织和规则知识库检验流程设计结果是否可执行。
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 虚拟券商组织架构设计</h2>
+      <p>
+        组织模型要服务两个目标：一是给流程设计 Agent 提供真实约束，二是给运行沙盒解析处理人。
+        因此需要同时建模“条线 - 部门 - 组 - 岗位 - 兼任关系”。
+      </p>
+      <div class="tree">华东证券模拟公司
+├── 公司治理层
+│   ├── 董事长
+│   ├── 总裁
+│   ├── 分管领导 - IT条线
+│   ├── 分管领导 - 零售/财富条线
+│   ├── 分管领导 - 投行条线
+│   ├── 首席风险官 CRO
+│   └── 合规总监 CCO
+├── IT条线
+│   ├── 信息技术总部
+│   │   ├── 总经理 / 副总经理 / 总经理助理
+│   │   ├── 应用研发组 - 主管 / 员工
+│   │   ├── 数据平台组 - 主管 / 员工
+│   │   └── 安全运维组 - 主管 / 员工
+├── 零售与财富条线
+│   ├── 财富管理总部
+│   ├── 信用业务部
+│   └── 分支机构管理部
+├── 投行条线
+│   ├── 投资银行管理委员会
+│   ├── 投行一部 / 投行二部
+│   └── 投行质控部
+├── 机构与交易条线
+│   ├── 机构客户部
+│   ├── 固定收益部
+│   └── 权益衍生品部
+└── 中后台与监督条线
+    ├── 计划财务部
+    ├── 人力资源部
+    ├── 行政办公室
+    ├── 风险管理部
+    ├── 合规法律部
+    └── 稽核审计部</div>
+
+      <h3>关键建模规则</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>对象</th>
+            <th>字段</th>
+            <th>用途</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>条线</td>
+            <td><code>line_id</code>, <code>line_name</code>, <code>leader_user_id</code></td>
+            <td>支持“报分管领导审批”“跨部门按条线汇总”等路径。</td>
+          </tr>
+          <tr>
+            <td>部门</td>
+            <td><code>dept_id</code>, <code>parent_dept_id</code>, <code>line_id</code>, <code>dept_type</code></td>
+            <td>支持本部门、本条线、特定部门、分支机构等处理人来源。</td>
+          </tr>
+          <tr>
+            <td>岗位任职</td>
+            <td><code>user_id</code>, <code>dept_id</code>, <code>position_code</code>, <code>is_primary</code></td>
+            <td>支持总经理、副总经理、总经理助理、主管、员工和兼任。</td>
+          </tr>
+          <tr>
+            <td>兼任关系</td>
+            <td><code>assignment_type</code>, <code>effective_from</code>, <code>effective_to</code></td>
+            <td>模拟领导兼任部门总经理、总经理助理兼任组主管等情况。</td>
+          </tr>
+          <tr>
+            <td>审批角色</td>
+            <td><code>role_alias</code>, <code>resolver_rule</code></td>
+            <td>把“部门主管”“分管领导”“印章管理员”等映射到实际用户。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>建议内置兼任样例</h3>
+      <ul>
+        <li>IT 条线分管领导兼任信息技术总部总经理，用于测试“上级与部门负责人同人”的去重和升级。</li>
+        <li>信息技术总部总经理助理兼任数据平台组主管，用于测试组级审批和部门级审批的跳转。</li>
+        <li>合规总监兼任合规法律部总经理，用于测试合规职能审批。</li>
+        <li>投行条线分管领导兼任投资银行管理委员会主任，用于测试委员会/条线双重身份。</li>
+        <li>计划财务部分管领导兼任计划财务部总经理，用于测试财务金额审批升级。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3. 自下而上的流程设计原则与规则/RAG</h2>
+      <p>
+        流程设计不能只按 raw source 描述“画路径”，还要遵守组织层级、授权矩阵、岗位职责和制度边界。
+        这里建议把“自下而上”固化为一组规则，并让 Agent 通过 RAG 检索制度依据。
+      </p>
+
+      <div class="grid">
+        <div class="card wide">
+          <h3><span class="pill blue">层级规则</span> 默认审批链</h3>
+          <ol>
+            <li>发起人提交后，默认先到直属主管或组主管。</li>
+            <li>部门内事项进入部门总经理或副总经理审批。</li>
+            <li>跨部门、跨条线或高金额事项进入条线分管领导。</li>
+            <li>重大事项进入总裁、董事长或专门委员会。</li>
+            <li>监督类事项必须引入合规、风险、稽核等独立审核环节。</li>
+          </ol>
+        </div>
+        <div class="card wide">
+          <h3><span class="pill green">冲突规则</span> 兼任与回避</h3>
+          <ol>
+            <li>如果下一审批人与发起人相同，必须跳过或升级。</li>
+            <li>如果多个连续环节解析到同一人，保留最高必要审批环节并记录原因。</li>
+            <li>经办人与复核人不能是同一人。</li>
+            <li>合规、风险、财务等独立审核不应被业务条线负责人替代。</li>
+            <li>退回路径统一回到 <code>DRAFT</code> 或上一处理人，不能产生孤立任务。</li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>规则知识库范围</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>规则文档</th>
+            <th>示例内容</th>
+            <th>影响的流程设计</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>组织架构与岗位职责说明</td>
+            <td>部门职责、条线负责人、部门负责人、兼任关系</td>
+            <td>处理人来源、角色解析、审批层级</td>
+          </tr>
+          <tr>
+            <td>授权审批矩阵</td>
+            <td>金额、风险级别、业务类型对应的审批权限</td>
+            <td>金额分叉、升级路径、董事长/总裁审批</td>
+          </tr>
+          <tr>
+            <td>财务费用管理办法</td>
+            <td>报销、预算、付款、采购金额边界</td>
+            <td>费用报销、采购、付款流程</td>
+          </tr>
+          <tr>
+            <td>信息系统变更管理办法</td>
+            <td>开发、测试、上线、回退、安全评估</td>
+            <td>IT 发布、权限申请、系统变更流程</td>
+          </tr>
+          <tr>
+            <td>印章与合同管理办法</td>
+            <td>印章类型、法务审核、行政审批、归档要求</td>
+            <td>用印、合同会签、文件归档流程</td>
+          </tr>
+          <tr>
+            <td>电子公文系统使用管理办法</td>
+            <td>文种类别、办公室枢纽、三级审批、时限、催办、归档</td>
+            <td>工作签报、发文、收文、公告、制度、合同、用印等通用公文流程</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>RAG 工作流调整</h3>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-step">
+            <strong>1. 解析意图</strong>
+            判断 raw source 属于费用、用印、采购、IT 变更、人事等类型。
+          </div>
+          <div class="flow-step">
+            <strong>2. 检索规则</strong>
+            从制度库、组织库、授权矩阵检索相关条款和岗位信息。
+          </div>
+          <div class="flow-step">
+            <strong>3. 抽取流程</strong>
+            ProcessExtractionAgent 同时看到 raw source 和规则上下文。
+          </div>
+          <div class="flow-step">
+            <strong>4. 业务校验</strong>
+            ValidationAgent 检查是否违反层级、回避、金额、职能审核规则。
+          </div>
+          <div class="flow-step">
+            <strong>5. 运行验证</strong>
+            用 runtime sandbox 发起实例，检查处理人、路径、条件是否可执行。
+          </div>
+        </div>
+      </div>
+
+      <div class="callout amber">
+        <strong>V2 边界：</strong>
+        RAG 先支持本地制度 Markdown/TXT 和组织 JSON，不处理复杂 PDF 版式。后续再接 DOCX/PDF 解析和引用级证据展示。
+      </div>
+    </section>
+
+    <section>
+      <h2>4. 流程开发/运行功能方案</h2>
+      <p>
+        “流程开发”在 V2 中不是代码生成，也不是接入完整 OA，而是把流程库中的 <code>ProcessDefinition</code>
+        编译为本地可运行实例。用户可以发起、审批、退回、切换审批人，并看到流转日志。
+      </p>
+
+      <h3>核心功能</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>功能</th>
+            <th>说明</th>
+            <th>验收标准</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>流程库运行入口</td>
+            <td>在流程详情页新增“运行流程”或“开发为运行流程”。</td>
+            <td>从任一流程库流程进入运行沙盒。</td>
+          </tr>
+          <tr>
+            <td>表单渲染</td>
+            <td>根据 <code>form_fields</code> 生成申请表单，支持文本、数字、日期、下拉、员工选择。</td>
+            <td>字段必填、默认值、选项和只读状态生效。</td>
+          </tr>
+          <tr>
+            <td>路径选择</td>
+            <td>审批人看到当前环节可用的 <code>submit_paths</code>。</td>
+            <td>路径按钮按条件过滤，不满足条件的路径不可提交或显示禁用原因。</td>
+          </tr>
+          <tr>
+            <td>处理人解析</td>
+            <td>根据组织架构解析部门主管、部门总经理、条线分管领导、特定角色。</td>
+            <td>能够处理兼任、跳过同人、升级到上级。</td>
+          </tr>
+          <tr>
+            <td>当前用户切换</td>
+            <td>页面顶部提供 Persona Switcher，模拟不同审批人登录。</td>
+            <td>切换后待办列表和可操作按钮变化。</td>
+          </tr>
+          <tr>
+            <td>实例轨迹</td>
+            <td>记录每次提交、审批、退回、自动跳过和条件命中。</td>
+            <td>实例详情可还原完整审批路径。</td>
+          </tr>
+          <tr>
+            <td>流程图高亮</td>
+            <td>使用现有 draw.io 或简化 SVG，高亮当前环节和已走路径。</td>
+            <td>用户可以看出实例当前卡在哪个环节。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>建议运行时架构</h3>
+      <pre>app/runtime/
+├── models.py              # ProcessInstance, RuntimeTask, AuditLog, OrgUser
+├── engine.py              # start_instance, complete_task, return_to_draft
+├── handler_resolver.py    # 根据组织和角色解析审批人
+├── condition_eval.py      # 安全条件判断，不使用 Python eval
+├── form_renderer.py       # JSON 字段到前端表单 schema
+├── seed_org.py            # 虚拟券商组织架构数据
+└── tests/
+    ├── test_runtime_engine.py
+    ├── test_handler_resolver.py
+    └── test_condition_eval.py</pre>
+
+      <h3>运行状态机</h3>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-step">
+            <strong>DRAFT</strong>
+            申请人填写或被退回修改。
+          </div>
+          <div class="flow-step">
+            <strong>ACTIVE</strong>
+            存在待办任务，等待审批人处理。
+          </div>
+          <div class="flow-step">
+            <strong>RETURNED</strong>
+            退回起草或退回上一处理人。
+          </div>
+          <div class="flow-step">
+            <strong>COMPLETED</strong>
+            进入 <code>END</code>，实例结束。
+          </div>
+          <div class="flow-step">
+            <strong>CANCELED</strong>
+            申请人撤回或管理员终止。
+          </div>
+        </div>
+      </div>
+
+      <h3>测试与多用户模拟</h3>
+      <p>
+        Demo 页面可以先用 Persona Switcher 做用户切换。自动化测试建议用 Playwright 多 BrowserContext：
+        官方文档说明 BrowserContext 类似独立的无痕 profile，可在一个场景中创建多个 context 来模拟多用户。
+      </p>
+      <pre>请假流程 E2E:
+1. 张三发起请假，填写请假天数 = 5
+2. 切换/模拟部门主管，同意
+3. 切换/模拟部门负责人，同意
+4. 条件命中 >3 天，生成部门总经理待办
+5. 切换/模拟部门总经理，同意
+6. 实例状态变为 COMPLETED，audit log 完整</pre>
+    </section>
+
+    <section>
+      <h2>5. 本地数据库方案</h2>
+      <p>
+        V2 建议引入本地 SQLite。理由是审批实例、任务、日志、组织架构和规则元数据都已经具备明显的关系型结构；
+        SQLite 是单文件、零配置、ACID 事务的嵌入式数据库，适合本地 demo 和测试。
+      </p>
+      <div class="callout amber">
+        <strong>V2.1 边界：</strong>
+        组织数据先以 <code>data/org/org_seed.json</code> 作为 canonical source，规则知识先以
+        <code>data/knowledge/*.md</code> 保存；SQLite 从 V2.2 运行时内核开始引入。
+      </div>
+
+      <div class="grid">
+        <div class="card wide">
+          <h3><span class="pill green">结构化状态</span> SQLite</h3>
+          <ul>
+            <li>保存流程定义版本、运行实例、待办任务、表单值、审计日志。</li>
+            <li>保存组织架构、岗位任职、兼任关系、角色解析规则。</li>
+            <li>用 Python 标准库 <code>sqlite3</code> 起步，后续再引入 SQLAlchemy/Alembic。</li>
+          </ul>
+        </div>
+        <div class="card wide">
+          <h3><span class="pill purple">规则检索</span> Chroma 或轻量索引</h3>
+          <ul>
+            <li>规则文档先落在 <code>data/knowledge/</code>。</li>
+            <li>如果要做语义检索，可用 Chroma <code>PersistentClient</code> 持久化本地索引。</li>
+            <li>如果暂时不想增加 embedding 成本，可先做关键词/BM25 + metadata 过滤。</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>建议表结构</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>表</th>
+            <th>核心字段</th>
+            <th>用途</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>process_definitions</code></td>
+            <td><code>process_id</code>, <code>version</code>, <code>definition_json</code>, <code>status</code></td>
+            <td>保存流程库和版本。</td>
+          </tr>
+          <tr>
+            <td><code>org_units</code></td>
+            <td><code>dept_id</code>, <code>parent_id</code>, <code>line_id</code>, <code>dept_type</code></td>
+            <td>组织架构。</td>
+          </tr>
+          <tr>
+            <td><code>users</code></td>
+            <td><code>user_id</code>, <code>name</code>, <code>employee_no</code>, <code>status</code></td>
+            <td>虚拟用户。</td>
+          </tr>
+          <tr>
+            <td><code>position_assignments</code></td>
+            <td><code>user_id</code>, <code>dept_id</code>, <code>position_code</code>, <code>is_primary</code></td>
+            <td>岗位、主管、兼任关系。</td>
+          </tr>
+          <tr>
+            <td><code>runtime_instances</code></td>
+            <td><code>instance_id</code>, <code>process_id</code>, <code>status</code>, <code>initiator_id</code></td>
+            <td>流程实例。</td>
+          </tr>
+          <tr>
+            <td><code>runtime_tasks</code></td>
+            <td><code>task_id</code>, <code>instance_id</code>, <code>node_id</code>, <code>assignee_id</code>, <code>status</code></td>
+            <td>待办任务。</td>
+          </tr>
+          <tr>
+            <td><code>audit_logs</code></td>
+            <td><code>event_type</code>, <code>actor_id</code>, <code>from_node</code>, <code>to_node</code>, <code>payload_json</code></td>
+            <td>流转轨迹与可解释日志。</td>
+          </tr>
+          <tr>
+            <td><code>rule_documents</code></td>
+            <td><code>doc_id</code>, <code>title</code>, <code>business_domain</code>, <code>source_path</code></td>
+            <td>制度文档元数据。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>6. 下一步迭代计划</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>阶段</th>
+            <th>目标</th>
+            <th>交付物</th>
+            <th>验收</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>V2.1 组织与规则种子</td>
+            <td>建立小型券商组织架构和规则知识库。</td>
+            <td><code>data/org/</code>, <code>data/knowledge/</code>, seed 脚本。</td>
+            <td>可解析部门主管、部门负责人、条线领导、兼任关系。</td>
+          </tr>
+          <tr>
+            <td>V2.2 运行时内核</td>
+            <td>让 ProcessDefinition 可启动实例并推进任务。</td>
+            <td><code>app/runtime/</code>, 条件判断, 处理人解析, SQLite 快照存储。</td>
+            <td>4 个现有 standard 流程至少各跑通 1 条成功路径和 1 条退回路径。</td>
+          </tr>
+          <tr>
+            <td>V2.3 运行沙盒 UI</td>
+            <td>在 HTML demo 中增加“流程运行”视图。</td>
+            <td>Persona Switcher、待办列表、表单渲染、审批操作、轨迹日志。</td>
+            <td>无需真实登录即可模拟多审批用户点击。</td>
+          </tr>
+          <tr>
+            <td>V2.4 RAG 设计增强</td>
+            <td>流程抽取和校验时检索组织/制度上下文。</td>
+            <td>规则 retriever tool、引用证据、ValidationAgent 规则检查。</td>
+            <td>费用、采购、用印、IT 变更能命中对应制度和授权规则。</td>
+          </tr>
+          <tr>
+            <td>V2.5 自动化测试</td>
+            <td>验证多用户审批路径。</td>
+            <td>runtime 单测 + Playwright E2E 设计。</td>
+            <td>关键流程可用自动化脚本完整发起、审批、结束。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>V2.1 已实现能力</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>交付物</th>
+            <th>内容</th>
+            <th>用途</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>data/org/org_seed.json</code></td>
+            <td>华东证券模拟组织，包含条线、部门、用户、岗位任职、兼任关系和流程角色别名。</td>
+            <td>供后续处理人解析、回避提示和运行沙盒使用。</td>
+          </tr>
+          <tr>
+            <td><code>data/knowledge/*.md</code></td>
+            <td>组织职责、授权矩阵、财务费用、采购、印章合同、IT 变更、电子公文系统等规则文档，带 metadata frontmatter。</td>
+            <td>供后续 RAG retriever 做业务域和流程类型过滤。</td>
+          </tr>
+          <tr>
+            <td><code>app/org_knowledge.py</code></td>
+            <td>组织/规则加载、metadata 解析、数据校验、轻量角色解析和同人审批提示。</td>
+            <td>V2.1 不启动流程实例，只提供可复用的基础能力。</td>
+          </tr>
+          <tr>
+            <td><code>scripts/validate_org_knowledge.py</code></td>
+            <td>命令行校验组织引用、岗位任职、角色别名、规则 metadata 和流程规则覆盖。</td>
+            <td>开发和数据维护时快速检查种子数据质量。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>V2.1 验收示例</h3>
+      <ul>
+        <li>请假流程：普通员工可解析直属主管、部门总经理和条线分管领导。</li>
+        <li>费用报销流程：可解析财务初审、财务负责人、财务出纳，并命中 5 万元金额边界规则。</li>
+        <li>用印流程：可解析法务审核、行政审批、财务审核、印章管理员，并命中印章类型规则。</li>
+        <li>采购流程：可解析采购受理人和采购委员会，并命中 50 万元采购会签规则。</li>
+        <li>兼任场景：IT 条线分管领导兼任信息技术总部总经理时，连续“部门总经理 -> 条线分管领导”会输出“需跳过或升级”提示。</li>
+      </ul>
+
+      <h3>V2.2 已实现能力</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>模块</th>
+            <th>能力</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>app/runtime/models.py</code></td>
+            <td>实例、任务、审计日志模型</td>
+            <td>支持 DRAFT、ACTIVE、RETURNED、COMPLETED、CANCELED 等实例状态。</td>
+          </tr>
+          <tr>
+            <td><code>app/runtime/condition_eval.py</code></td>
+            <td>安全条件判断</td>
+            <td>支持结论性意见、金额边界、文本选项、最后一人/非最后一人，不使用 Python eval。</td>
+          </tr>
+          <tr>
+            <td><code>app/runtime/handler_resolver.py</code></td>
+            <td>处理人解析</td>
+            <td>复用 V2.1 组织种子，可解析部门主管、部门总经理、条线领导、特定角色和表单字段指定人员。</td>
+          </tr>
+          <tr>
+            <td><code>app/runtime/form_renderer.py</code></td>
+            <td>表单渲染数据</td>
+            <td>按当前环节输出字段可见、可编辑、必填等状态，供 V2.3 UI 直接使用。</td>
+          </tr>
+          <tr>
+            <td><code>app/runtime/engine.py</code></td>
+            <td>流程实例推进</td>
+            <td>支持发起、提交、审批、退回、并行会签、同人审批自动跳过提示和审计日志。</td>
+          </tr>
+          <tr>
+            <td><code>app/runtime/store.py</code></td>
+            <td>SQLite 快照存储</td>
+            <td>保存实例、待办任务和审计日志快照，供后续 UI/看板读取。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <strong>暂缓但预留：</strong>
+        后续可以扩展流程运行看板、超时/瓶颈分析、流程优化 Agent、飞书/外部审批 adapter。
+        V2 数据库和日志模型要保留 <code>duration</code>、<code>actor</code>、<code>node</code>、<code>rule_hit</code> 等字段，方便后续分析闭环。
+      </div>
+    </section>
+
+    <section>
+      <h2>7. 参考资料</h2>
+      <ul>
+        <li><a href="https://finance.sina.cn/zl/2017-03-20/zl-ifycnpiu9165300.d.html?from=wap">证券公司组织架构研究</a>：前台按客户/业务类型设置，控制部门包含风险、合规、稽核等。</li>
+        <li><a href="https://95363.com/main/informationdisclosure/organizationalsystem/organizationalstructure/index.shtml">财达证券组织架构披露</a>：示例包含董事会、经营管理层、业务委员会、总部职能部门和分支机构。</li>
+        <li><a href="https://www.wanhesec.com.cn/main/views/ourself/companyjg/index.html">万和证券部门职责披露</a>：示例包含合规法律部、财富管理总部、投行综合管理部、资产管理部等职责。</li>
+        <li><a href="https://open.feishu.cn/document/server-docs/approval-v4/approval/create">飞书审批创建审批定义 API</a>：可创建审批定义，但 API 方式对条件分支等能力有约束。</li>
+        <li><a href="https://www.feishu.cn/hc/en-US/articles/360038784093-Use-external-approval">飞书外部审批</a>：支持将第三方审批接入飞书审批中心。</li>
+        <li><a href="https://docs.langchain.com/oss/python/langchain/rag">LangChain RAG 文档</a>：RAG 包含 indexing 与 retrieval/generation 两部分。</li>
+        <li><a href="https://docs.langchain.com/oss/python/langgraph/agentic-rag">LangGraph Agentic RAG 文档</a>：可构建会决定是否检索的 RAG Agent。</li>
+        <li><a href="https://www3.sqlite.org/about.html">SQLite 官方介绍</a>：自包含、serverless、零配置、事务型 SQL 数据库。</li>
+        <li><a href="https://docs.trychroma.com/docs/run-chroma/clients">Chroma PersistentClient 文档</a>：支持本地持久化向量库。</li>
+        <li><a href="https://playwright.dev/docs/browser-contexts">Playwright BrowserContext 文档</a>：支持隔离上下文和多用户场景测试。</li>
+      </ul>
+    </section>
+
+    <div class="footer">
+      Product plan for V2 runtime sandbox. Last updated: 2026-06-05.
+    </div>
+  </main>
+</body>
+</html>

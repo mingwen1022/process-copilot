@@ -1,0 +1,759 @@
+{
+  "review_metadata": {
+    "review_status": "human_reviewed",
+    "reviewer": "ming + double_subagent_review",
+    "reviewed_at": "2026-06-22T07:04:28+00:00",
+    "review_notes": "经两个无背景倾向 subagent 独立审核同一份样例库 Excel 与 target 后，由用户给出修复意见并已落地。合规与风险管理委员会因 raw source 故意模糊，保留为待确认项；结束本人处理、结束本部门处理、同时送并行审批属于当前 demo 不支持的多人/并行运行能力，不纳入 deterministic target；编号字段按样例库 Excel 修正为弹框选择/起草可手工录入或选择；任务名称不固化自编枚举，source 与 target 均改为未冻结、待业务维护确认。",
+    "review_evidence": {
+      "subagent_reviews": [
+        "019eedf1-e0b2-7093-b38b-6b3dc2617918",
+        "019eedf2-57f7-7772-b7a9-d016f8f5741f"
+      ],
+      "human_decision_summary": [
+        "合规模糊项进入待确认",
+        "多人同环节结束动作当前 demo 忽略",
+        "同时送并行审批当前 demo 忽略",
+        "编号以 Excel 弹框选择/手工录入口径为准",
+        "附件 target 保留",
+        "任务名称不自编枚举，raw source 已去误导"
+      ]
+    }
+  },
+  "deterministic_process_definition": {
+    "meta": {
+      "process_id": "EOA140",
+      "process_name": "子公司重大事项审批备案流程",
+      "version": "V1.0.0",
+      "responsible_dept": "战略发展部",
+      "description": "集团内各子公司及总部对口管理部门发起或协同处理子公司重大事项审批或备案的线上化流程，支持起草、子公司内部/高管审核、申请人分发、对口部门会签、公司领导批示及退回。",
+      "applicant_scope": "集团内各子公司及总部对口管理部门相关人员",
+      "entry_point": "OA系统"
+    },
+    "form_fields": [
+      {
+        "seq": 1,
+        "field_name": "标题",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "单行文本",
+        "logic_description": "起草人填写事项标题，最多 200 字。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "请输入标题",
+        "max_length": 200
+      },
+      {
+        "seq": 2,
+        "field_name": "编号",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "文号",
+        "logic_description": "沿用样例库“弹框选择”口径，起草环节可通过弹框选择或手工录入；生成规则为“子公司重大事项” + “(年份)” + 四位流水号 + “号”。",
+        "default_value": "生成规则：“子公司重大事项” + “(年份)” + 四位流水号 + “号”",
+        "options": null,
+        "placeholder": "请选择或录入编号",
+        "max_length": null
+      },
+      {
+        "seq": 3,
+        "field_name": "起草人",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [],
+        "component_type": "只读文本",
+        "logic_description": "自动带出当前登录人姓名，不支持编辑。",
+        "default_value": "当前登录人",
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 4,
+        "field_name": "起草时间",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [],
+        "component_type": "只读文本",
+        "logic_description": "自动带出起草时间，不支持编辑。",
+        "default_value": "系统当前时间",
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 5,
+        "field_name": "部门",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "部门选择",
+        "logic_description": "起草人选择或确认所属/发起部门。",
+        "default_value": null,
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 6,
+        "field_name": "联系电话",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "单行文本",
+        "logic_description": "起草人填写联系电话。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "请输入联系电话",
+        "max_length": 50
+      },
+      {
+        "seq": 7,
+        "field_name": "任务类型",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "下拉单选",
+        "logic_description": "选择子公司审批类或子公司备案类，并联动任务名称配置。",
+        "default_value": null,
+        "options": [
+          "子公司审批类",
+          "子公司备案类"
+        ],
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 8,
+        "field_name": "任务名称",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "下拉单选",
+        "logic_description": "根据任务类型联动任务名称；当前 source 未提供完整任务名称清单及默认对口部门映射，需后续业务维护确认。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "请选择任务名称（候选清单待业务维护）",
+        "max_length": null
+      },
+      {
+        "seq": 9,
+        "field_name": "对口部门",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "下拉多选",
+        "logic_description": "根据任务名称默认带出对口部门，允许起草人增删；当前 source 未冻结任务名称到默认对口部门的完整映射。",
+        "default_value": null,
+        "options": [
+          "战略发展部",
+          "战略发展部-数字化转型办公室",
+          "风险管理部",
+          "资产负债部",
+          "计划财务部",
+          "公益基金会",
+          "法律合规部",
+          "人力资源部",
+          "稽核审计中心",
+          "审计中心",
+          "信息技术部",
+          "营运中心",
+          "行政办公室",
+          "品牌中心",
+          "内控合规办公室",
+          "高级管理人员",
+          "董事会办公室",
+          "监事会办公室",
+          "纪检监察室"
+        ],
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 10,
+        "field_name": "重要程度",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "下拉单选",
+        "logic_description": "固定选项：一般、较高、很高。",
+        "default_value": null,
+        "options": [
+          "一般",
+          "较高",
+          "很高"
+        ],
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 11,
+        "field_name": "要求完成日期",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "日期组件",
+        "logic_description": "非必填；填写后按 yyyy-MM-dd 展示。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "yyyy-MM-dd（选填）",
+        "max_length": null
+      }
+    ],
+    "flow_nodes": [
+      {
+        "node_id": "draft",
+        "node_name": "起草",
+        "is_draft": true,
+        "handler": null,
+        "opinion": null,
+        "opinion_label": null,
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送子公司内部人员审核",
+            "condition": null,
+            "target_node_id": "subsidiary_internal_review"
+          },
+          {
+            "path_name": "送子公司高管审批",
+            "condition": null,
+            "target_node_id": "subsidiary_executive_approval"
+          },
+          {
+            "path_name": "送申请人分发",
+            "condition": null,
+            "target_node_id": "applicant_distribution"
+          }
+        ]
+      },
+      {
+        "node_id": "subsidiary_internal_review",
+        "node_name": "子公司内部人员审核",
+        "is_draft": false,
+        "handler": {
+          "mode": "多选-并行处理",
+          "source": "本公司",
+          "role": "起草人所属子公司所有人员",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "部门内部意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送子公司高管审批",
+            "condition": "结论性意见=同意 且 最后一人",
+            "target_node_id": "subsidiary_executive_approval"
+          },
+          {
+            "path_name": "增加子公司内部人员审核",
+            "condition": null,
+            "target_node_id": "subsidiary_internal_review"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意 且 最后一人",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      },
+      {
+        "node_id": "subsidiary_executive_approval",
+        "node_name": "子公司高管审批",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "本公司",
+          "role": "子公司高管+一级部主负责人+一级部辅负责人",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "部门内部意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送申请人分发",
+            "condition": "结论性意见=同意",
+            "target_node_id": "applicant_distribution"
+          },
+          {
+            "path_name": "增加子公司高管审批",
+            "condition": null,
+            "target_node_id": "subsidiary_executive_approval"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      },
+      {
+        "node_id": "applicant_distribution",
+        "node_name": "申请人分发",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "不指定",
+          "role": "申请人",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": false,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "部门内部意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送对口部门专员分发",
+            "condition": null,
+            "target_node_id": "counterpart_dispatch"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": null,
+            "target_node_id": "DRAFT"
+          }
+        ]
+      },
+      {
+        "node_id": "counterpart_dispatch",
+        "node_name": "对口部门专员分发",
+        "is_draft": false,
+        "handler": {
+          "mode": "多选-并行处理",
+          "source": "表单字段指定",
+          "role": "协作流程_会签专员",
+          "source_field": "对口部门"
+        },
+        "opinion": {
+          "conclusive_required": false,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "会签意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送部门专员处理",
+            "condition": "部门最后一人",
+            "target_node_id": "department_specialist"
+          },
+          {
+            "path_name": "送公司领导批示",
+            "condition": "多环节最后一人",
+            "target_node_id": "company_leader_instruction"
+          },
+          {
+            "path_name": "结束文档处理",
+            "condition": "多环节最后一人",
+            "target_node_id": "END"
+          },
+          {
+            "path_name": "返回申请人分发",
+            "condition": "多环节最后一人",
+            "target_node_id": "applicant_distribution"
+          }
+        ]
+      },
+      {
+        "node_id": "department_specialist",
+        "node_name": "部门专员处理",
+        "is_draft": false,
+        "handler": {
+          "mode": "多选-并行处理",
+          "source": "特定部门",
+          "role": "协作流程_会签专员",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": false,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "会签意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送部门人员处理",
+            "condition": "部门最后一人",
+            "target_node_id": "department_staff"
+          },
+          {
+            "path_name": "送部门领导处理",
+            "condition": "部门最后一人",
+            "target_node_id": "department_leader"
+          },
+          {
+            "path_name": "退回对口部门专员分发",
+            "condition": "部门最后一人",
+            "target_node_id": "counterpart_dispatch"
+          }
+        ]
+      },
+      {
+        "node_id": "department_staff",
+        "node_name": "部门人员处理",
+        "is_draft": false,
+        "handler": {
+          "mode": "多选-并行处理",
+          "source": "本条线",
+          "role": "部门主管+基层员工",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "会签意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送部门领导处理",
+            "condition": "部门最后一人",
+            "target_node_id": "department_leader"
+          },
+          {
+            "path_name": "返回部门专员处理",
+            "condition": "部门最后一人",
+            "target_node_id": "department_specialist"
+          }
+        ]
+      },
+      {
+        "node_id": "department_leader",
+        "node_name": "部门领导处理",
+        "is_draft": false,
+        "handler": {
+          "mode": "多选-并行处理",
+          "source": "本条线",
+          "role": "主&辅负责人",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "会签意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送部门人员处理",
+            "condition": "部门最后一人",
+            "target_node_id": "department_staff"
+          },
+          {
+            "path_name": "增加部门领导处理",
+            "condition": null,
+            "target_node_id": "department_leader"
+          },
+          {
+            "path_name": "返回部门专员处理",
+            "condition": "部门最后一人",
+            "target_node_id": "department_specialist"
+          }
+        ]
+      },
+      {
+        "node_id": "company_leader_instruction",
+        "node_name": "公司领导批示",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "特定部门",
+          "role": "高级管理人员（除董事长总裁）+总裁",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意",
+            "阅"
+          ]
+        },
+        "opinion_label": "公司领导意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "增加公司领导批示",
+            "condition": null,
+            "target_node_id": "company_leader_instruction"
+          },
+          {
+            "path_name": "返回对口部门专员分发",
+            "condition": null,
+            "target_node_id": "counterpart_dispatch"
+          }
+        ]
+      }
+    ],
+    "attachments": [
+      {
+        "attachment_type": "普通附件",
+        "upload_stages": [
+          "draft"
+        ],
+        "required_stages": []
+      }
+    ],
+    "roles": [
+      {
+        "role_name": "协作流程_会签专员",
+        "role_type": "流程角色",
+        "members": [
+          "按对口部门维护"
+        ],
+        "department": null
+      },
+      {
+        "role_name": "合规与风险管理委员会",
+        "role_type": "流程角色",
+        "members": [
+          "李俊杰",
+          "聂小刚",
+          "张志红",
+          "韩志达",
+          "董博阳",
+          "王吉学",
+          "许业荣",
+          "杨晓涛",
+          "黄韦",
+          "穆青"
+        ],
+        "department": null
+      }
+    ]
+  },
+  "clarification_targets": [
+    {
+      "id": "clarify_task_name_mapping",
+      "question": "任务名称候选清单和任务名称到默认对口部门的映射尚未冻结，是否由战略发展部维护完整清单后再发布？",
+      "expected_topic": "任务名称/默认对口部门映射未冻结",
+      "severity": "blocking",
+      "evidence": [
+        "01_邮件往来_子公司重大事项审批备案上线范围.txt",
+        "03_群聊记录_任务类型与对口部门讨论.doc",
+        "06_上线问题清单_待确认项.csv"
+      ],
+      "acceptable_options": [
+        "发布前由战略发展部维护完整任务名称和默认对口部门映射",
+        "首版仅保留任务类型和对口部门手动选择，不固化任务名称枚举",
+        "暂不处理，作为发布前待确认项保留"
+      ],
+      "must_reference_evidence": [
+        "01_邮件往来_子公司重大事项审批备案上线范围.txt",
+        "03_群聊记录_任务类型与对口部门讨论.doc",
+        "04_环节处理人与任务名称初始候选.xlsx"
+      ]
+    },
+    {
+      "id": "clarify_attachment_required",
+      "question": "普通附件是否需要按任务名称设置条件必传，例如董事会材料、子公司决议、监管沟通材料是否必须上传？",
+      "expected_topic": "附件是否条件必传",
+      "severity": "warning",
+      "evidence": [
+        "03_群聊记录_任务类型与对口部门讨论.doc",
+        "05_移动端与附件角色说明.md",
+        "06_上线问题清单_待确认项.csv"
+      ]
+    },
+    {
+      "id": "clarify_committee_branch",
+      "question": "合规与风险管理委员会是否需要作为公司领导批示后的可选审批分支纳入主流程？",
+      "expected_topic": "委员会节点是否进入主流程",
+      "severity": "warning",
+      "evidence": [
+        "02_访谈纪要_战略发展部与OA平台.docx",
+        "06_上线问题清单_待确认项.csv"
+      ]
+    },
+    {
+      "id": "clarify_mobile_draft",
+      "question": "移动端是否允许起草子公司重大事项申请？",
+      "expected_topic": "移动端起草能力未冻结",
+      "severity": "warning",
+      "evidence": [
+        "05_移动端与附件角色说明.md",
+        "06_上线问题清单_待确认项.csv"
+      ]
+    },
+    {
+      "id": "clarify_sla",
+      "question": "各审批环节是否需要统一配置处理期限/SLA？",
+      "expected_topic": "处理期限缺失",
+      "severity": "warning",
+      "evidence": [
+        "02_访谈纪要_战略发展部与OA平台.docx",
+        "06_上线问题清单_待确认项.csv"
+      ]
+    }
+  ],
+  "accepted_optional_clarifications": [
+    "线下“办公室收文/盖章确认”是否需要保留为线上节点可以被提问，但正确方向应为不纳入主流程。",
+    "申请人分发被退回后是否展示“返回上一环节处理”可以被提问，但主流程图可弱化。",
+    {
+      "topic": "多人并行节点的个人结束动作",
+      "accepted_position": "结束本人处理属于同一环节多人并行审批的运行控制动作，当前 demo 不支持同一环节多人审批，可不作为确定性流程路径抽取。"
+    },
+    {
+      "topic": "本部门多人并行结束动作",
+      "accepted_position": "结束本部门处理属于同一部门多人并行会签后的汇总控制动作，当前 demo 可先忽略，不进入 deterministic submit_paths。"
+    },
+    {
+      "topic": "同时送并行审批",
+      "accepted_position": "同时送两个环节意味着运行时需要支持并行分支和并行审批，当前 demo 不作为必需能力；可作为后续 runtime 扩展或待确认项。"
+    }
+  ],
+  "forbidden_clarifications": [
+    "不要要求用户补充已经明确的任务类型固定选项：子公司审批类、子公司备案类。",
+    "不要把采购、用印、费用报销作为本流程节点。",
+    "不要把办公室收文、线下盖章确认直接生成线上主流程节点。"
+  ],
+  "guardrail_targets": {
+    "ignore_noise": [
+      "子公司办公用品采购",
+      "装修合同用印",
+      "费用报销",
+      "办公室收文",
+      "线下盖章确认"
+    ],
+    "offline_flow_policy": "线下流转样例仅作为参考，不作为线上主流程主要依据。",
+    "binary_source_policy": "图片和扫描 PDF 第一版如果无法 OCR，应输出解析 warning，不应把二进制乱码写入 source context。"
+  },
+  "evidence_map": {
+    "meta": [
+      "01_邮件往来_子公司重大事项审批备案上线范围.txt"
+    ],
+    "form_fields": [
+      "01_邮件往来_子公司重大事项审批备案上线范围.txt",
+      "03_群聊记录_任务类型与对口部门讨论.doc",
+      "04_环节处理人与任务名称初始候选.xlsx"
+    ],
+    "flow_nodes": [
+      "02_访谈纪要_战略发展部与OA平台.docx",
+      "04_环节处理人与任务名称初始候选.xlsx"
+    ],
+    "submit_paths": [
+      "02_访谈纪要_战略发展部与OA平台.docx",
+      "04_环节处理人与任务名称初始候选.xlsx"
+    ],
+    "attachments": [
+      "03_群聊记录_任务类型与对口部门讨论.doc",
+      "05_移动端与附件角色说明.md",
+      "06_上线问题清单_待确认项.csv"
+    ],
+    "custom_roles": [
+      "05_移动端与附件角色说明.md"
+    ],
+    "clarifications": [
+      "06_上线问题清单_待确认项.csv",
+      "03_群聊记录_任务类型与对口部门讨论.doc"
+    ],
+    "guardrails": [
+      "01_邮件往来_子公司重大事项审批备案上线范围.txt",
+      "03_群聊记录_任务类型与对口部门讨论.doc",
+      "09_噪音_子公司月度经营会纪要.txt"
+    ]
+  },
+  "eval_weights": {
+    "meta": 5,
+    "form_fields": 20,
+    "flow_nodes": 15,
+    "submit_paths": 15,
+    "attachments": 8,
+    "roles": 7,
+    "clarifications": 20,
+    "evidence_guardrail": 10
+  }
+}

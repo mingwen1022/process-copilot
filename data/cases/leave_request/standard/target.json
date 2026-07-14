@@ -1,0 +1,326 @@
+{
+  "review_metadata": {
+    "review_status": "draft",
+    "reviewer": "claude_authored_pending_user_review",
+    "reviewed_at": "2026-06-28T00:00:00+00:00",
+    "review_notes": "易懂演示案例：员工请假申请，按请假类型与时长条件跳级审批。本 target 由 AI 设计模拟 source 后给出，作为演示用 gold；待用户复核定稿后将 review_status 改为 human_reviewed。严肃评测仍以 EOA140 真实案例为准。"
+  },
+  "deterministic_process_definition": {
+    "meta": {
+      "process_id": "LEAVE-001",
+      "process_name": "员工请假申请流程",
+      "version": "V1.0.0",
+      "responsible_dept": "人力资源部",
+      "description": "员工发起请假申请，经部门主管、（按请假类型与时长）部门总经理、条线分管领导逐级审批的线上流程；短假在主管/总经理层即可结束，长假和特殊假才上报分管领导。",
+      "applicant_scope": "公司全体在职员工",
+      "entry_point": "OA系统"
+    },
+    "form_fields": [
+      {
+        "seq": 1,
+        "field_name": "申请人",
+        "required_stages": [],
+        "visible_stages": ["all"],
+        "editable_stages": [],
+        "component_type": "只读文本",
+        "logic_description": "自动带出当前登录人姓名，不可编辑。",
+        "default_value": "当前登录人",
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 2,
+        "field_name": "所属部门",
+        "required_stages": [],
+        "visible_stages": ["all"],
+        "editable_stages": [],
+        "component_type": "只读文本",
+        "logic_description": "自动带出申请人所属部门，不可编辑。",
+        "default_value": "申请人所属部门",
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 3,
+        "field_name": "请假类型",
+        "required_stages": ["draft"],
+        "visible_stages": ["all"],
+        "editable_stages": ["draft"],
+        "component_type": "下拉单选",
+        "logic_description": "固定七类，联动后续审批层级判断。",
+        "default_value": null,
+        "options": ["年假", "事假", "病假", "婚假", "产假", "陪产假", "丧假"],
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 4,
+        "field_name": "开始日期",
+        "required_stages": ["draft"],
+        "visible_stages": ["all"],
+        "editable_stages": ["draft"],
+        "component_type": "日期组件",
+        "logic_description": "请假开始日期，yyyy-MM-dd。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "yyyy-MM-dd",
+        "max_length": null
+      },
+      {
+        "seq": 5,
+        "field_name": "结束日期",
+        "required_stages": ["draft"],
+        "visible_stages": ["all"],
+        "editable_stages": ["draft"],
+        "component_type": "日期组件",
+        "logic_description": "请假结束日期，yyyy-MM-dd。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "yyyy-MM-dd",
+        "max_length": null
+      },
+      {
+        "seq": 6,
+        "field_name": "请假天数",
+        "required_stages": ["draft"],
+        "visible_stages": ["all"],
+        "editable_stages": ["draft"],
+        "component_type": "数字",
+        "logic_description": "申请人填写请假天数（单位：天），用于审批层级判断。",
+        "default_value": null,
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 7,
+        "field_name": "请假事由",
+        "required_stages": ["draft"],
+        "visible_stages": ["all"],
+        "editable_stages": ["draft"],
+        "component_type": "多行文本",
+        "logic_description": "简述请假事由。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "请输入请假事由",
+        "max_length": null
+      },
+      {
+        "seq": 8,
+        "field_name": "工作交接人",
+        "required_stages": ["draft"],
+        "visible_stages": ["all"],
+        "editable_stages": ["draft"],
+        "component_type": "员工选择",
+        "logic_description": "从员工列表选择请假期间的工作交接人。",
+        "default_value": null,
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 9,
+        "field_name": "联系电话",
+        "required_stages": ["draft"],
+        "visible_stages": ["all"],
+        "editable_stages": ["draft"],
+        "component_type": "单行文本",
+        "logic_description": "请假期间的联系方式。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "请输入联系电话",
+        "max_length": 50
+      }
+    ],
+    "flow_nodes": [
+      {
+        "node_id": "draft",
+        "node_name": "起草",
+        "is_draft": true,
+        "handler": null,
+        "opinion": null,
+        "opinion_label": null,
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送部门主管审批",
+            "condition": null,
+            "target_node_id": "dept_supervisor"
+          }
+        ]
+      },
+      {
+        "node_id": "dept_supervisor",
+        "node_name": "部门主管审批",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "本部门",
+          "role": "部门主管",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": ["同意", "不同意"]
+        },
+        "opinion_label": "部门主管意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "流程结束",
+            "condition": "结论性意见=同意 且 请假类型∈{事假,病假} 且 请假天数≤3天",
+            "target_node_id": "END"
+          },
+          {
+            "path_name": "送部门总经理审批",
+            "condition": "结论性意见=同意 且 非(请假类型∈{事假,病假} 且 请假天数≤3天)",
+            "target_node_id": "dept_gm"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      },
+      {
+        "node_id": "dept_gm",
+        "node_name": "部门总经理审批",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "本部门",
+          "role": "部门总经理",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": ["同意", "不同意"]
+        },
+        "opinion_label": "部门总经理意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "流程结束",
+            "condition": "结论性意见=同意 且 请假天数≤7天 且 请假类型∉{婚假,产假,陪产假}",
+            "target_node_id": "END"
+          },
+          {
+            "path_name": "送条线分管领导审批",
+            "condition": "结论性意见=同意 且 (请假天数>7天 或 请假类型∈{婚假,产假,陪产假})",
+            "target_node_id": "line_leader"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      },
+      {
+        "node_id": "line_leader",
+        "node_name": "条线分管领导审批",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "本条线",
+          "role": "条线分管领导",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": ["同意", "不同意"]
+        },
+        "opinion_label": "分管领导意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "流程结束",
+            "condition": "结论性意见=同意",
+            "target_node_id": "END"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      }
+    ],
+    "attachments": [
+      {
+        "attachment_type": "证明材料",
+        "upload_stages": ["draft"],
+        "required_stages": []
+      }
+    ],
+    "roles": null
+  },
+  "clarification_targets": [
+    {
+      "id": "clarify_sick_leave_proof",
+      "question": "病假是否需要强制上传医疗/就诊证明？是否设为'病假且天数≥3天时必传'？",
+      "expected_topic": "病假证明是否强制及触发条件未定",
+      "severity": "blocking",
+      "evidence": ["06_上线问题清单_待确认.csv", "04_综合群聊记录_含请假讨论.doc", "10_群聊截图_审批与病假证明讨论.png", "05_移动端与附件角色说明.md"],
+      "acceptable_options": [
+        "病假且请假天数≥3天时必须上传证明",
+        "所有病假都必须上传证明",
+        "证明仅建议上传、不强制",
+        "暂不处理，作为发布前待确认项保留"
+      ],
+      "must_reference_evidence": ["06_上线问题清单_待确认.csv"]
+    },
+    {
+      "id": "clarify_leave_days_basis",
+      "question": "请假天数按自然日还是工作日计算？是否自动扣除周末和法定节假日？",
+      "expected_topic": "请假天数口径（自然日/工作日）未统一",
+      "severity": "warning",
+      "evidence": ["06_上线问题清单_待确认.csv"]
+    },
+    {
+      "id": "clarify_approval_sla",
+      "question": "各审批环节是否需要配置处理时限（超时提醒/自动催办）？本期是否上线？",
+      "expected_topic": "审批时限/SLA 是否本期上线未定",
+      "severity": "warning",
+      "evidence": ["06_上线问题清单_待确认.csv"]
+    }
+  ],
+  "accepted_optional_clarifications": [
+    "请假天数是否需要与开始/结束日期做一致性校验，可以提问，但不影响主流程结构。"
+  ],
+  "forbidden_clarifications": [
+    "不要追问请假类型的固定七类之外是否还有其它类型（已明确固定为七类）。",
+    "不要把调休、倒休纳入本请假流程（明确走考勤系统）。",
+    "不要把年度体检安排、年会报名等无关通知当作本流程的节点或字段。"
+  ],
+  "guardrail_targets": {
+    "ignore_noise": ["年度体检安排", "年会报名", "调休", "倒休"],
+    "offline_flow_policy": "旧纸质请假单/台账扫描件（png/pdf）仅为历史背景，即使被视觉转录也不作为线上节点或口径依据。",
+    "binary_source_policy": "图片截图由视觉模型忠实转录进上下文（含群聊截图等真实信号）；扫描 PDF 无文字层时输出 requires_ocr warning；转录只搬运不推断，'仅参考'类线下件仍受线下参考护栏约束。"
+  },
+  "evidence_map": {
+    "meta": ["01_请假流程需求汇总_人力资源部.docx"],
+    "form_fields": ["03_请假字段与审批权限矩阵.xlsx", "01_请假流程需求汇总_人力资源部.docx"],
+    "flow_nodes": ["01_请假流程需求汇总_人力资源部.docx", "03_请假字段与审批权限矩阵.xlsx", "10_群聊截图_审批与病假证明讨论.png"],
+    "submit_paths": ["01_请假流程需求汇总_人力资源部.docx", "04_综合群聊记录_含请假讨论.doc", "10_群聊截图_审批与病假证明讨论.png"],
+    "attachments": ["05_移动端与附件角色说明.md", "06_上线问题清单_待确认.csv"],
+    "clarifications": ["06_上线问题清单_待确认.csv", "04_综合群聊记录_含请假讨论.doc", "10_群聊截图_审批与病假证明讨论.png"],
+    "guardrails": ["09_噪音_年会报名与体检通知.txt", "04_综合群聊记录_含请假讨论.doc", "02_HR周邮件包_请假是其中一项.txt"]
+  },
+  "eval_weights": {
+    "meta": 5,
+    "form_fields": 20,
+    "flow_nodes": 15,
+    "submit_paths": 20,
+    "attachments": 5,
+    "roles": 5,
+    "clarifications": 20,
+    "evidence_guardrail": 10
+  }
+}

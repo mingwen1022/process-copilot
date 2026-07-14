@@ -1,0 +1,1793 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>流程运行沙盒 Demo</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --surface: #ffffff;
+      --surface-2: #f7f9fc;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d8e1eb;
+      --line-strong: #bdc8d6;
+      --blue: #2458a6;
+      --blue-soft: #e8f0ff;
+      --green: #237a56;
+      --green-soft: #e8f6ef;
+      --amber: #9a6500;
+      --amber-soft: #fff3d7;
+      --red: #b42318;
+      --red-soft: #fdeceb;
+      --purple: #6842c2;
+      --purple-soft: #f0ebff;
+      --nav: #111827;
+      --shadow: 0 10px 26px rgba(16, 24, 40, 0.08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: var(--nav);
+      color: #f8fafc;
+      min-height: 100vh;
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      padding: 8px 6px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #08111f;
+      background: linear-gradient(135deg, #7dd3fc, #86efac);
+      font-weight: 850;
+      font-size: 15px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.18;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      color: #aab4c5;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .nav-links {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-link {
+      min-height: 42px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.06);
+      padding: 9px 10px;
+      color: #dfe7f3;
+      font-weight: 760;
+      font-size: 13px;
+    }
+
+    .nav-link span {
+      display: block;
+      margin-top: 3px;
+      color: #aab4c5;
+      font-size: 11px;
+      font-weight: 560;
+      line-height: 1.25;
+    }
+
+    .nav-link.active {
+      background: #f8fafc;
+      color: var(--ink);
+      border-color: #f8fafc;
+    }
+
+    .nav-link.active span {
+      color: var(--muted);
+    }
+
+    .side-title {
+      color: #aab4c5;
+      font-size: 12px;
+      font-weight: 780;
+      padding: 3px 6px 0;
+    }
+
+    .flow-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .flow-card {
+      width: 100%;
+      min-height: 70px;
+      color: #dfe7f3;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .flow-card.active {
+      color: var(--ink);
+      background: #ffffff;
+      border-color: #ffffff;
+    }
+
+    .flow-card .line {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      font-weight: 820;
+      font-size: 13px;
+    }
+
+    .flow-card .meta {
+      margin-top: 6px;
+      color: inherit;
+      opacity: 0.7;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .sidebar-note {
+      margin-top: auto;
+      color: #aab4c5;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 14px 6px 2px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .main {
+      min-width: 0;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 13px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title h2 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.25;
+    }
+
+    .title p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .select, .input, .textarea {
+      min-height: 36px;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      background: #ffffff;
+      border-radius: 7px;
+      padding: 7px 9px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .select:focus, .input:focus, .textarea:focus {
+      border-color: #9db8ee;
+      box-shadow: 0 0 0 3px rgba(36, 88, 166, 0.12);
+    }
+
+    .button {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 7px;
+      padding: 7px 11px;
+      color: var(--ink);
+      background: #eef3f9;
+      border: 1px solid var(--line);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .button.primary {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    .button.danger {
+      background: var(--red-soft);
+      border-color: #efb5b0;
+      color: var(--red);
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 82px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .kpi label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .kpi strong {
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .kpi small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .workspace {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 270px minmax(560px, 1fr) 310px;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .panel {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+
+    .panel-head {
+      min-height: 48px;
+      padding: 12px 13px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .panel-sub {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .panel-body {
+      padding: 12px;
+    }
+
+    .user-card {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+      width: 100%;
+      text-align: left;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+      margin-bottom: 8px;
+    }
+
+    .user-card.active {
+      background: var(--blue-soft);
+      border-color: #b8ccf4;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: #e7ecf3;
+      color: #344054;
+      font-weight: 850;
+      font-size: 13px;
+    }
+
+    .avatar.blue { background: var(--blue-soft); color: var(--blue); }
+    .avatar.green { background: var(--green-soft); color: var(--green); }
+    .avatar.amber { background: var(--amber-soft); color: var(--amber); }
+    .avatar.purple { background: var(--purple-soft); color: var(--purple); }
+
+    .user-name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 830;
+      font-size: 13px;
+    }
+
+    .user-role {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .task-card {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .task-card.active {
+      border-color: #a9c3f4;
+      background: var(--blue-soft);
+    }
+
+    .task-card strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .task-card span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #eef3f9;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 3px;
+    }
+
+    .tab {
+      min-height: 30px;
+      padding: 5px 9px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 820;
+    }
+
+    .tab.active {
+      color: var(--blue);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      color: #344054;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .readonly {
+      background: #f3f6fa;
+      color: #536273;
+    }
+
+    .tag {
+      display: inline-flex;
+      min-height: 22px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .tag.blue { color: var(--blue); background: var(--blue-soft); border-color: #b8ccf4; }
+    .tag.green { color: var(--green); background: var(--green-soft); border-color: #b9e4cf; }
+    .tag.amber { color: var(--amber); background: var(--amber-soft); border-color: #f0d58a; }
+    .tag.red { color: var(--red); background: var(--red-soft); border-color: #efb5b0; }
+    .tag.purple { color: var(--purple); background: var(--purple-soft); border-color: #d5c6ff; }
+
+    .approval-box {
+      margin-top: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .segmented {
+      display: inline-flex;
+      width: fit-content;
+      border: 1px solid var(--line);
+      background: #eef3f9;
+      border-radius: 8px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .segmented button {
+      min-height: 30px;
+      min-width: 66px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .segmented button.active {
+      background: #ffffff;
+      color: var(--blue);
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+    }
+
+    .path-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .path-button {
+      min-height: 48px;
+      text-align: left;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      border-radius: 8px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--ink);
+    }
+
+    .path-button.enabled {
+      border-color: #a9c3f4;
+      background: var(--blue-soft);
+    }
+
+    .path-button.disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    .path-button strong {
+      font-size: 13px;
+      display: block;
+    }
+
+    .path-button small {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+      display: block;
+    }
+
+    .diagram {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(160px, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .node {
+      min-height: 94px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 10px;
+      display: grid;
+      align-content: start;
+      gap: 6px;
+      position: relative;
+    }
+
+    .node.current {
+      border-color: #2f6fed;
+      box-shadow: inset 0 0 0 2px rgba(47, 111, 237, 0.18);
+      background: var(--blue-soft);
+    }
+
+    .node.done {
+      background: var(--green-soft);
+      border-color: #b9e4cf;
+    }
+
+    .node.waiting {
+      background: #ffffff;
+    }
+
+    .node.end {
+      background: #f4f6fa;
+    }
+
+    .node .node-id {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .node strong {
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .node small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .detail-table th, .detail-table td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .detail-table th {
+      background: #f1f5f9;
+      font-size: 12px;
+      color: #344054;
+    }
+
+    .path-lines {
+      display: grid;
+      gap: 6px;
+    }
+
+    .path-line {
+      display: grid;
+      grid-template-columns: 122px minmax(0, 1fr) 92px;
+      gap: 8px;
+      align-items: start;
+      padding: 7px;
+      border: 1px solid #edf1f6;
+      border-radius: 7px;
+      background: #fbfcfe;
+    }
+
+    .path-line strong {
+      font-size: 12px;
+    }
+
+    .path-line span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .right-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .policy-list, .timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .policy-item {
+      border: 1px solid var(--line);
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 9px;
+    }
+
+    .policy-item strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .policy-item span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #edf2f7;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      margin-top: 2px;
+    }
+
+    .timeline-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 9px;
+      background: #ffffff;
+    }
+
+    .timeline-card strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .timeline-card span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .empty {
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      background: #fbfcfe;
+      color: var(--muted);
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .json-box {
+      max-height: 520px;
+      overflow: auto;
+      margin: 0;
+      border: 1px solid var(--line);
+      background: #0f172a;
+      color: #e5edf7;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 1280px) {
+      .workspace {
+        grid-template-columns: 250px minmax(520px, 1fr);
+      }
+      .right-stack {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .kpis {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        min-height: auto;
+      }
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+      .right-stack {
+        grid-template-columns: 1fr;
+      }
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .toolbar {
+        justify-content: flex-start;
+      }
+      .kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .diagram {
+        grid-template-columns: 1fr;
+      }
+      .path-line {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">AI</div>
+        <div>
+          <h1>流程运行沙盒</h1>
+          <p>旧纯前端模拟版</p>
+        </div>
+      </div>
+
+      <div class="nav-links">
+        <a class="nav-link" href="../repo/repo_overview.html">Repo Overview<span>项目结构与能力说明</span></a>
+        <a class="nav-link" href="http://127.0.0.1:8001/">统一 App<span>真实后端 + SQLite 版本</span></a>
+        <a class="nav-link" href="flow_ai_design_demo.html">设计工作台<span>source 上传与生成预览</span></a>
+        <a class="nav-link active" href="runtime_sandbox_demo.html">旧运行沙盒<span>前端模拟审批流转</span></a>
+        <a class="nav-link" href="../product/runtime_product_plan.html">V2 方案<span>组织、规则、运行时规划</span></a>
+      </div>
+
+      <div class="side-title">流程库</div>
+      <div class="flow-list" id="flowList"></div>
+
+      <div class="sidebar-note">
+        当前页面不接后端。实例、待办、审批轨迹都在浏览器内存里模拟；刷新页面会重置。
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="title">
+          <h2 id="pageTitle">旧纯前端运行沙盒 Demo</h2>
+          <p id="pageSubtitle">这个页面只保留历史模拟体验；主产品入口请使用统一 App 的用户工作台。</p>
+        </div>
+        <div class="toolbar">
+          <select class="select" id="scenarioSelect" aria-label="场景">
+            <option value="normal">正常通过场景</option>
+            <option value="branch">高金额/长假分支</option>
+            <option value="return">退回修改场景</option>
+          </select>
+          <select class="select" id="userSelect" aria-label="当前用户"></select>
+          <button class="button" id="resetButton" type="button">重置实例</button>
+          <button class="button primary" id="autoButton" type="button">自动推进一步</button>
+        </div>
+      </header>
+
+      <section class="kpis">
+        <div class="kpi">
+          <label>实例状态</label>
+          <strong id="statusKpi">草稿</strong>
+          <small id="statusSub">等待发起人提交</small>
+        </div>
+        <div class="kpi">
+          <label>当前环节</label>
+          <strong id="nodeKpi">起草</strong>
+          <small id="nodeSub">draft</small>
+        </div>
+        <div class="kpi">
+          <label>待办数量</label>
+          <strong id="taskKpi">1</strong>
+          <small id="taskSub">当前用户 1 条</small>
+        </div>
+        <div class="kpi">
+          <label>路径可用性</label>
+          <strong id="pathKpi">1</strong>
+          <small id="pathSub">按表单和意见实时计算</small>
+        </div>
+        <div class="kpi">
+          <label>规则命中</label>
+          <strong id="ruleKpi">2</strong>
+          <small id="ruleSub">组织、授权和业务制度</small>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">模拟用户与待办</div>
+              <div class="panel-sub">切换当前登录用户，查看该用户可处理的任务。</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="userList"></div>
+            <div class="panel-sub" style="margin: 12px 0 6px;">当前用户待办</div>
+            <div class="task-list" id="taskList"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title" id="instanceTitle">当前实例</div>
+              <div class="panel-sub" id="instanceSub">尚未开始</div>
+            </div>
+            <div class="tabs" role="tablist">
+              <button class="tab active" data-view="formView" type="button">表单处理</button>
+              <button class="tab" data-view="flowView" type="button">流程图</button>
+              <button class="tab" data-view="detailView" type="button">环节明细</button>
+              <button class="tab" data-view="jsonView" type="button">状态 JSON</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="view active" id="formView">
+              <div class="form-grid" id="formFields"></div>
+              <div class="approval-box" id="approvalBox"></div>
+            </div>
+
+            <div class="view" id="flowView">
+              <div class="diagram" id="diagram"></div>
+            </div>
+
+            <div class="view" id="detailView">
+              <table class="detail-table">
+                <thead>
+                  <tr>
+                    <th style="width: 118px;">环节</th>
+                    <th style="width: 116px;">处理角色</th>
+                    <th>提交路径</th>
+                  </tr>
+                </thead>
+                <tbody id="detailTable"></tbody>
+              </table>
+            </div>
+
+            <div class="view" id="jsonView">
+              <pre class="json-box" id="jsonBox"></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-stack">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">可用路径</div>
+                <div class="panel-sub">由当前环节、表单字段和提交条件计算。</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="path-grid" id="pathList"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">规则命中</div>
+                <div class="panel-sub">模拟后续 RAG/规则引擎会展示的证据。</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="policy-list" id="policyList"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">流转轨迹</div>
+                <div class="panel-sub">记录用户动作、自动跳过和实例状态。</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="timeline" id="timeline"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const USERS = [
+      { id: "u_it_app_staff", name: "王嘉树", role: "IT应用组普通员工", group: "IT", tone: "blue" },
+      { id: "u_it_app_supervisor", name: "李承宇", role: "IT应用组主管", group: "IT", tone: "green" },
+      { id: "u_it_line_leader", name: "赵文杰", role: "IT条线分管领导 / 信息技术总部总经理", group: "IT", tone: "purple" },
+      { id: "u_wealth_staff", name: "许悦然", role: "财富管理总部普通员工", group: "财富", tone: "blue" },
+      { id: "u_wealth_supervisor", name: "朱景澄", role: "财富管理组主管", group: "财富", tone: "green" },
+      { id: "u_wealth_gm", name: "林婉清", role: "财富管理总部总经理", group: "财富", tone: "purple" },
+      { id: "u_finance_staff", name: "陈知予", role: "财务初审", group: "财务", tone: "amber" },
+      { id: "u_finance_gm", name: "梁思远", role: "财务负责人", group: "财务", tone: "purple" },
+      { id: "u_cashier", name: "罗映雪", role: "财务出纳", group: "财务", tone: "green" },
+      { id: "u_admin_staff", name: "陆清然", role: "行政管理部普通员工", group: "行政", tone: "blue" },
+      { id: "u_admin_supervisor", name: "沈知夏", role: "行政管理组主管", group: "行政", tone: "green" },
+      { id: "u_admin_gm", name: "叶修远", role: "行政管理部总经理", group: "行政", tone: "purple" },
+      { id: "u_compliance_supervisor", name: "韩景明", role: "法务审核", group: "合规", tone: "amber" },
+      { id: "u_seal_admin", name: "秦若宁", role: "印章管理员", group: "行政", tone: "green" },
+      { id: "u_procurement_staff", name: "方若云", role: "采购受理人", group: "采购", tone: "amber" },
+      { id: "u_committee_1", name: "何嘉宁", role: "采购委员会：中后台分管领导", group: "委员会", tone: "purple" },
+      { id: "u_committee_2", name: "马承泽", role: "采购委员会：风控负责人", group: "委员会", tone: "purple" },
+      { id: "u_committee_3", name: "顾清源", role: "采购委员会：合规负责人", group: "委员会", tone: "purple" }
+    ];
+
+    const FLOWS = {
+      leave: {
+        id: "LEAVE-001",
+        name: "员工请假申请",
+        version: "v1.0",
+        owner: "人力资源 / OA",
+        defaultUser: "u_it_app_staff",
+        fields: [
+          field("标题", "text", "王嘉树-事假申请", true, true),
+          field("申请人", "text", "王嘉树", false, false),
+          field("所属部门", "text", "信息技术总部/应用开发组", false, false),
+          field("假期类型", "select", "事假", true, true, ["年假", "事假", "病假", "调休"]),
+          field("开始日期", "date", "2026-06-08", true, true),
+          field("结束日期", "date", "2026-06-12", true, true),
+          field("请假天数", "number", 5, true, true),
+          field("请假事由", "textarea", "家庭事务，需要连续请假处理。", true, true),
+          field("代理人", "text", "冯一诺", false, true),
+          field("紧急联系方式", "text", "13800000001", true, true)
+        ],
+        nodes: [
+          node("draft", "起草", "起草人", true, [
+            path("送部门主管审批", null, "dept_supervisor"),
+            path("返回上一处理人", "上游环节退回时", "draft")
+          ]),
+          node("dept_supervisor", "部门主管审批", "部门主管", false, [
+            path("送部门领导审批", "结论性意见=同意", "dept_leader"),
+            path("退回起草", "结论性意见=不同意", "DRAFT")
+          ]),
+          node("dept_leader", "部门领导审批", "一级主/辅负责人", false, [
+            path("流程结束", "结论性意见=同意 且 请假天数≤3", "END"),
+            path("送部门总经理审批", "结论性意见=同意 且 请假天数＞3", "dept_gm"),
+            path("退回起草", "结论性意见=不同意", "DRAFT")
+          ]),
+          node("dept_gm", "部门总经理审批", "部门总经理", false, [
+            path("流程结束", "结论性意见=同意", "END"),
+            path("退回起草", "结论性意见=不同意", "DRAFT")
+          ])
+        ],
+        assignees: {
+          draft: ["initiator"],
+          dept_supervisor: ["u_it_app_supervisor"],
+          dept_leader: ["u_it_line_leader"],
+          dept_gm: ["u_it_line_leader"]
+        },
+        policies: [
+          ["组织规则", "普通员工请假先经直属主管，再经部门负责人或条线负责人审批。"],
+          ["假期规则", "请假天数大于 3 天时需升级至部门总经理审批。"],
+          ["兼任提示", "IT 条线分管领导兼任信息技术总部总经理，同人连续审批时应跳过或升级。"]
+        ],
+        scenarios: {
+          normal: { "请假天数": 2, "结束日期": "2026-06-09", "请假事由": "家庭事务，请假两天。", title: "短假直接结束" },
+          branch: { "请假天数": 5, "结束日期": "2026-06-12", "请假事由": "家庭事务，需要连续请假处理。", title: "长假升级审批" },
+          return: { "请假天数": 4, title: "主管退回补充材料" }
+        }
+      },
+      expense: {
+        id: "EXPENSE-001",
+        name: "员工费用报销申请",
+        version: "v1.0",
+        owner: "财务管理部",
+        defaultUser: "u_wealth_staff",
+        fields: [
+          field("标题", "text", "许悦然-差旅费报销", true, true),
+          field("申请人", "text", "许悦然", false, false),
+          field("所属部门", "text", "财富管理总部", false, false),
+          field("报销类型", "select", "差旅费", true, true, ["差旅费", "交通费", "培训费", "业务招待费", "其他"]),
+          field("费用发生日期", "date", "2026-06-02", true, true),
+          field("报销金额（元）", "number", 60000, true, true),
+          field("费用说明", "textarea", "参加机构客户路演产生的交通、住宿及会务费用。", true, true),
+          field("收款账户", "text", "招商银行 6222 **** 8831", true, true),
+          field("发票数量", "number", 8, true, true)
+        ],
+        nodes: [
+          node("draft", "起草", "起草人", true, [path("送部门主管审批", null, "dept_supervisor"), path("返回上一处理人", "上游环节退回时", "draft")]),
+          node("dept_supervisor", "部门主管审批", "部门主管", false, [path("送部门负责人审批", "结论性意见=同意", "dept_leader"), path("退回起草", "结论性意见=不同意", "DRAFT")]),
+          node("dept_leader", "部门负责人审批", "一级主/辅负责人", false, [
+            path("送财务确认", "结论性意见=同意 且 报销金额＜50000元", "financial_confirm"),
+            path("送财务初审", "结论性意见=同意 且 报销金额≥50000元", "financial_initial"),
+            path("退回起草", "结论性意见=不同意", "DRAFT")
+          ]),
+          node("financial_initial", "财务初审", "费用报销_财务初审", false, [path("送财务负责人审批", "结论性意见=同意", "financial_director"), path("退回起草", "结论性意见=不同意", "DRAFT")]),
+          node("financial_director", "财务负责人审批", "费用报销_财务负责人", false, [path("送财务确认", "结论性意见=同意", "financial_confirm"), path("退回起草", "结论性意见=不同意", "DRAFT")]),
+          node("financial_confirm", "财务出纳处理", "费用报销_财务出纳", false, [path("流程结束", null, "END")])
+        ],
+        assignees: {
+          draft: ["initiator"],
+          dept_supervisor: ["u_wealth_supervisor"],
+          dept_leader: ["u_wealth_gm"],
+          financial_initial: ["u_finance_staff"],
+          financial_director: ["u_finance_gm"],
+          financial_confirm: ["u_cashier"]
+        },
+        policies: [
+          ["授权矩阵", "费用报销金额小于 5 万元可进入财务确认，5 万元及以上需财务初审和财务负责人审批。"],
+          ["财务规则", "报销说明、发票数量、收款账户为出纳付款前的关键核验信息。"],
+          ["组织规则", "业务部门负责人确认业务真实性后，再进入财务线审批。"]
+        ],
+        scenarios: {
+          normal: { "报销金额（元）": 3000, "费用说明": "客户拜访产生的交通费用。", title: "小额报销快速确认" },
+          branch: { "报销金额（元）": 60000, "费用说明": "参加机构客户路演产生的交通、住宿及会务费用。", title: "高金额财务升级" },
+          return: { "报销金额（元）": 12000, "发票数量": 0, title: "发票缺失退回" }
+        }
+      },
+      seal: {
+        id: "SEAL-001",
+        name: "用印申请",
+        version: "v1.0",
+        owner: "行政管理部",
+        defaultUser: "u_admin_staff",
+        fields: [
+          field("标题", "text", "陆清然-合同章用印", true, true),
+          field("申请人", "text", "陆清然", false, false),
+          field("所属部门", "text", "行政管理部", false, false),
+          field("印章类型", "select", "合同章", true, true, ["公章", "合同章", "财务专用章", "法定代表人章"]),
+          field("用印文件名称", "text", "系统维护服务合同", true, true),
+          field("用印事由", "textarea", "供应商年度维护服务协议签署。", true, true),
+          field("用印份数", "number", 2, true, true),
+          field("用印日期", "date", "2026-06-06", true, true),
+          field("文件是否需要返还", "select", "是", true, true, ["是", "否"])
+        ],
+        nodes: [
+          node("draft", "起草", "起草人", true, [path("送部门主管审批", null, "dept_supervisor"), path("返回上一处理人", "上游环节退回时", "draft")]),
+          node("dept_supervisor", "部门主管审批", "部门主管", false, [
+            path("送法务审核", "结论性意见=同意 且 印章类型=公章或合同章", "legal_review"),
+            path("送财务部审核", "结论性意见=同意 且 印章类型=财务专用章或法定代表人章", "finance_review"),
+            path("退回起草", "结论性意见=不同意", "DRAFT")
+          ]),
+          node("legal_review", "法务审核", "用印申请_法务审核", false, [path("送行政管理部审批", "结论性意见=同意", "admin_approval"), path("退回起草", "结论性意见=不同意", "DRAFT")]),
+          node("admin_approval", "行政管理部审批", "用印申请_行政审批", false, [path("送印章管理员办理", "结论性意见=同意", "seal_officer"), path("退回起草", "结论性意见=不同意", "DRAFT")]),
+          node("finance_review", "财务部审核", "用印申请_财务审核", false, [path("送印章管理员办理", "结论性意见=同意", "seal_officer"), path("退回起草", "结论性意见=不同意", "DRAFT")]),
+          node("seal_officer", "印章管理员办理", "用印申请_印章管理员", false, [path("送申请人知悉", null, "applicant_informed")]),
+          node("applicant_informed", "申请人知悉", "起草人", false, [path("流程结束", null, "END")])
+        ],
+        assignees: {
+          draft: ["initiator"],
+          dept_supervisor: ["u_admin_supervisor"],
+          legal_review: ["u_compliance_supervisor"],
+          admin_approval: ["u_admin_gm"],
+          finance_review: ["u_finance_staff"],
+          seal_officer: ["u_seal_admin"],
+          applicant_informed: ["initiator"]
+        },
+        policies: [
+          ["印章规则", "公章、合同章需要法务审核后进入行政审批。"],
+          ["财务印章", "财务专用章和法定代表人章需走财务部审核。"],
+          ["留痕要求", "印章管理员办理后需申请人知悉，形成完整用印闭环。"]
+        ],
+        scenarios: {
+          normal: { "印章类型": "合同章", title: "合同章法务路径" },
+          branch: { "印章类型": "财务专用章", "用印文件名称": "银行账户证明", title: "财务印章路径" },
+          return: { "印章类型": "公章", "用印事由": "材料不完整，待补充。", title: "法务退回补充" }
+        }
+      },
+      procurement: {
+        id: "PROC-001",
+        name: "采购申请",
+        version: "v1.0",
+        owner: "采购管理部",
+        defaultUser: "u_it_app_staff",
+        fields: [
+          field("标题", "text", "王嘉树-服务器扩容采购", true, true),
+          field("申请人", "text", "王嘉树", false, false),
+          field("所属部门", "text", "信息技术总部/应用开发组", false, false),
+          field("采购类型", "select", "IT设备", true, true, ["IT设备", "软件服务", "办公用品", "咨询服务"]),
+          field("采购内容说明", "textarea", "交易监控系统扩容服务器与配套存储。", true, true),
+          field("采购金额（元）", "number", 600000, true, true),
+          field("采购理由", "textarea", "现有资源不足以支撑新业务峰值，需要扩容。", true, true),
+          field("预计使用日期", "date", "2026-07-01", true, true),
+          field("参考供应商", "text", "华东云服科技有限公司", false, true),
+          field("采购部门受理人", "text", "方若云", true, true)
+        ],
+        nodes: [
+          node("draft", "起草", "起草人", true, [path("送部门主管审批", null, "dept_supervisor"), path("返回上一处理人", "上游环节退回时", "draft")]),
+          node("dept_supervisor", "部门主管审批", "部门主管", false, [path("送部门负责人审批", "结论性意见=同意", "dept_leader"), path("退回起草", "结论性意见=不同意", "DRAFT")]),
+          node("dept_leader", "部门负责人审批", "一级主/辅负责人", false, [path("送采购部门受理", "结论性意见=同意", "procurement_accept"), path("退回起草", "结论性意见=不同意", "DRAFT")]),
+          node("procurement_accept", "采购部门受理", "采购受理人", false, [
+            path("送申请人确认", "采购金额＜500000元", "applicant_confirm"),
+            path("送采购委员会会签", "采购金额≥500000元", "committee_review"),
+            path("退回起草", "需退回修改时", "DRAFT")
+          ]),
+          node("committee_review", "采购委员会会签", "采购申请_采购委员会", false, [
+            path("送申请人确认", "结论性意见=同意 且 最后一人", "applicant_confirm"),
+            path("结束本人处理", "非最后一人", "committee_review"),
+            path("退回采购部门受理", "结论性意见=不同意 且 最后一人", "procurement_accept")
+          ]),
+          node("applicant_confirm", "申请人确认回签", "起草人", false, [path("流程结束", null, "END")])
+        ],
+        assignees: {
+          draft: ["initiator"],
+          dept_supervisor: ["u_it_app_supervisor"],
+          dept_leader: ["u_it_line_leader"],
+          procurement_accept: ["u_procurement_staff"],
+          committee_review: ["u_committee_1", "u_committee_2", "u_committee_3"],
+          applicant_confirm: ["initiator"]
+        },
+        policies: [
+          ["采购规则", "采购金额小于 50 万元由采购部门受理后申请人确认。"],
+          ["授权矩阵", "采购金额 50 万元及以上需采购委员会会签。"],
+          ["组织规则", "采购受理人可由表单字段指定，委员会采用并行处理。"]
+        ],
+        scenarios: {
+          normal: { "采购金额（元）": 120000, "采购内容说明": "应用监控软件续费。", title: "低金额采购" },
+          branch: { "采购金额（元）": 600000, "采购内容说明": "交易监控系统扩容服务器与配套存储。", title: "高金额委员会会签" },
+          return: { "采购金额（元）": 600000, "采购理由": "预算依据不完整，需补充询价记录。", title: "采购受理退回" }
+        }
+      }
+    };
+
+    let activeFlowKey = "leave";
+    let activeScenario = "branch";
+    let currentUserId = FLOWS[activeFlowKey].defaultUser;
+    let currentTaskId = null;
+    let opinion = "同意";
+    let instance = null;
+
+    function field(name, type, value, required, editable, options = []) {
+      return { name, type, value, required, editable, options };
+    }
+
+    function node(id, name, role, draft, paths) {
+      return { id, name, role, draft, paths };
+    }
+
+    function path(name, condition, target) {
+      return { name, condition, target };
+    }
+
+    function user(id) {
+      return USERS.find(item => item.id === id) || { id, name: id, role: "未知用户", tone: "blue" };
+    }
+
+    function flow() {
+      return FLOWS[activeFlowKey];
+    }
+
+    function currentNode() {
+      return flow().nodes.find(item => item.id === instance.currentNode);
+    }
+
+    function nextTaskId() {
+      return "task_" + Math.random().toString(36).slice(2, 8);
+    }
+
+    function newInstance() {
+      const selected = flow();
+      const values = {};
+      selected.fields.forEach(item => values[item.name] = item.value);
+      const patch = selected.scenarios[activeScenario] || {};
+      Object.keys(patch).forEach(key => {
+        if (key !== "title") values[key] = patch[key];
+      });
+      currentUserId = selected.defaultUser;
+      opinion = activeScenario === "return" ? "不同意" : "同意";
+      instance = {
+        id: selected.id + "-" + new Date().toTimeString().slice(0, 8).replaceAll(":", ""),
+        status: "DRAFT",
+        currentNode: "draft",
+        initiator: selected.defaultUser,
+        values,
+        tasks: [],
+        completedNodes: [],
+        logs: []
+      };
+      createTasks("draft", "实例启动");
+      log("INSTANCE_STARTED", "发起流程", user(instance.initiator).name + " 创建了 " + selected.name);
+      currentTaskId = instance.tasks[0]?.id || null;
+      render();
+    }
+
+    function createTasks(nodeId, reason) {
+      const selected = flow();
+      const assigneeIds = (selected.assignees[nodeId] || ["initiator"]).map(id => id === "initiator" ? instance.initiator : id);
+      const nodeInfo = selected.nodes.find(item => item.id === nodeId);
+      assigneeIds.forEach(assigneeId => {
+        instance.tasks.push({
+          id: nextTaskId(),
+          nodeId,
+          nodeName: nodeInfo.name,
+          assigneeId,
+          status: "OPEN",
+          createdAt: shortTime()
+        });
+      });
+      instance.currentNode = nodeId;
+      instance.status = nodeInfo.draft ? (reason === "退回起草" ? "RETURNED" : "DRAFT") : "ACTIVE";
+      log("TASK_CREATED", nodeInfo.name + " 生成待办", assigneeIds.map(id => user(id).name).join("、"));
+    }
+
+    function log(type, title, detail) {
+      instance.logs.unshift({ type, title, detail, at: shortTime() });
+    }
+
+    function shortTime() {
+      return new Date().toTimeString().slice(0, 8);
+    }
+
+    function openTasks() {
+      return instance.tasks.filter(item => item.status === "OPEN");
+    }
+
+    function tasksForCurrentUser() {
+      return openTasks().filter(item => item.assigneeId === currentUserId);
+    }
+
+    function selectedTask() {
+      if (!currentTaskId || !openTasks().some(item => item.id === currentTaskId)) {
+        currentTaskId = tasksForCurrentUser()[0]?.id || openTasks()[0]?.id || null;
+      }
+      return instance.tasks.find(item => item.id === currentTaskId) || null;
+    }
+
+    function evaluate(condition, pathTarget) {
+      if (!condition) return { enabled: true, reason: "无条件" };
+      const value = instance.values;
+      const text = condition.replaceAll(" ", "");
+
+      if (text.includes("结论性意见=同意") && opinion !== "同意") return { enabled: false, reason: "需要审批意见为同意" };
+      if (text.includes("结论性意见=不同意") && opinion !== "不同意") return { enabled: false, reason: "需要审批意见为不同意" };
+      if (text.includes("需退回修改时") && opinion !== "不同意") return { enabled: false, reason: "退回修改时启用" };
+      if (text.includes("上游环节退回时") && instance.status !== "RETURNED") return { enabled: false, reason: "仅退回后可用" };
+
+      if (text.includes("最后一人") && !text.includes("非最后一人") && !isLastTask()) return { enabled: false, reason: "等待其他会签人处理" };
+      if (text.includes("非最后一人") && isLastTask()) return { enabled: false, reason: "最后一人不能结束本人处理" };
+
+      const leaveDays = Number(value["请假天数"] || 0);
+      if (text.includes("请假天数≤3") && leaveDays > 3) return { enabled: false, reason: "请假天数大于 3" };
+      if ((text.includes("请假天数＞3") || text.includes("请假天数>3")) && leaveDays <= 3) return { enabled: false, reason: "请假天数未超过 3" };
+
+      const expenseAmount = Number(value["报销金额（元）"] || 0);
+      if (text.includes("报销金额＜50000元") && expenseAmount >= 50000) return { enabled: false, reason: "报销金额不小于 5 万" };
+      if (text.includes("报销金额≥50000元") && expenseAmount < 50000) return { enabled: false, reason: "报销金额小于 5 万" };
+
+      const purchaseAmount = Number(value["采购金额（元）"] || 0);
+      if (text.includes("采购金额＜500000元") && purchaseAmount >= 500000) return { enabled: false, reason: "采购金额不小于 50 万" };
+      if (text.includes("采购金额≥500000元") && purchaseAmount < 500000) return { enabled: false, reason: "采购金额小于 50 万" };
+
+      const stamp = value["印章类型"];
+      if (text.includes("印章类型=公章或合同章") && !["公章", "合同章"].includes(stamp)) return { enabled: false, reason: "印章类型不是公章或合同章" };
+      if (text.includes("印章类型=财务专用章或法定代表人章") && !["财务专用章", "法定代表人章"].includes(stamp)) return { enabled: false, reason: "印章类型不是财务类印章" };
+
+      return { enabled: true, reason: "条件满足" };
+    }
+
+    function isLastTask() {
+      const task = selectedTask();
+      if (!task) return true;
+      return openTasks().filter(item => item.nodeId === task.nodeId).length <= 1;
+    }
+
+    function submitPath(pathItem) {
+      const task = selectedTask();
+      if (!task) return;
+      const result = evaluate(pathItem.condition, pathItem.target);
+      if (!result.enabled) return;
+      if (task.assigneeId !== currentUserId) {
+        currentUserId = task.assigneeId;
+      }
+
+      task.status = "COMPLETED";
+      task.completedAt = shortTime();
+      instance.completedNodes.push(task.nodeId);
+      log("TASK_COMPLETED", user(task.assigneeId).name + " 处理 " + task.nodeName, pathItem.name + (pathItem.condition ? " / " + pathItem.condition : ""));
+
+      if (pathItem.target === task.nodeId) {
+        instance.currentNode = task.nodeId;
+        instance.status = "ACTIVE";
+        currentTaskId = tasksForCurrentUser()[0]?.id || openTasks()[0]?.id || null;
+        render();
+        return;
+      }
+
+      if (pathItem.target === "END") {
+        instance.currentNode = "END";
+        instance.status = "COMPLETED";
+        currentTaskId = null;
+        log("INSTANCE_COMPLETED", "流程结束", flow().name + " 已完成");
+        render();
+        return;
+      }
+
+      if (pathItem.target === "DRAFT") {
+        createTasks("draft", "退回起草");
+        currentUserId = instance.initiator;
+        currentTaskId = tasksForCurrentUser()[0]?.id || null;
+        log("INSTANCE_RETURNED", "退回起草", "由 " + user(task.assigneeId).name + " 退回申请人修改");
+        render();
+        return;
+      }
+
+      const targetAssignees = (flow().assignees[pathItem.target] || []).map(id => id === "initiator" ? instance.initiator : id);
+      if (targetAssignees.length && targetAssignees.every(id => id === task.assigneeId)) {
+        instance.completedNodes.push(pathItem.target);
+        log("SAME_ACTOR_SKIPPED", "同人审批自动跳过", "目标环节处理人仍为 " + user(task.assigneeId).name + "，demo 中直接跳过");
+        const targetNode = flow().nodes.find(item => item.id === pathItem.target);
+        const forward = targetNode.paths.find(item => item.target !== "DRAFT" && item.target !== targetNode.id && evaluate(item.condition, item.target).enabled);
+        if (forward) {
+          submitVirtual(targetNode, task.assigneeId, forward);
+        }
+        render();
+        return;
+      }
+
+      createTasks(pathItem.target, "正常流转");
+      const nextOpen = openTasks().find(item => targetAssignees.includes(item.assigneeId)) || openTasks()[0];
+      currentUserId = nextOpen?.assigneeId || currentUserId;
+      currentTaskId = nextOpen?.id || null;
+      render();
+    }
+
+    function submitVirtual(nodeInfo, actorId, pathItem) {
+      log("TASK_COMPLETED", user(actorId).name + " 跳过后自动判断 " + nodeInfo.name, pathItem.name);
+      if (pathItem.target === "END") {
+        instance.currentNode = "END";
+        instance.status = "COMPLETED";
+        currentTaskId = null;
+        log("INSTANCE_COMPLETED", "流程结束", flow().name + " 已完成");
+      } else {
+        createTasks(pathItem.target, "跳过后流转");
+      }
+    }
+
+    function autoStep() {
+      const task = selectedTask();
+      if (!task) return;
+      const nodeInfo = flow().nodes.find(item => item.id === task.nodeId);
+      if (task.assigneeId !== currentUserId) currentUserId = task.assigneeId;
+      if (activeScenario === "return" && !nodeInfo.draft && nodeInfo.paths.some(item => item.target === "DRAFT")) {
+        opinion = "不同意";
+      } else {
+        opinion = "同意";
+      }
+      const available = nodeInfo.paths.find(item => evaluate(item.condition, item.target).enabled && !(item.name === "返回上一处理人"));
+      if (available) submitPath(available);
+    }
+
+    function updateValue(name, value) {
+      instance.values[name] = value;
+      render();
+    }
+
+    function render() {
+      renderFlowList();
+      renderUsers();
+      renderToolbar();
+      renderKpis();
+      renderForm();
+      renderPaths();
+      renderDiagram();
+      renderDetailTable();
+      renderPolicies();
+      renderTimeline();
+      renderJson();
+    }
+
+    function renderFlowList() {
+      const el = document.getElementById("flowList");
+      el.innerHTML = Object.entries(FLOWS).map(([key, item]) => `
+        <button class="flow-card ${key === activeFlowKey ? "active" : ""}" data-flow="${key}" type="button">
+          <div class="line"><span>${item.name}</span><span>${item.version}</span></div>
+          <div class="meta">${item.id} / ${item.nodes.length} 个环节 / ${item.fields.length} 个字段</div>
+        </button>
+      `).join("");
+      el.querySelectorAll("[data-flow]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          activeFlowKey = btn.dataset.flow;
+          currentUserId = flow().defaultUser;
+          newInstance();
+        });
+      });
+    }
+
+    function renderToolbar() {
+      document.getElementById("pageTitle").textContent = "旧纯前端运行沙盒 Demo / " + flow().name;
+      document.getElementById("pageSubtitle").textContent = `${flow().id} · ${flow().owner} · ${flow().scenarios[activeScenario]?.title || "模拟场景"} · 主产品入口请使用统一 App`;
+      const scenarioSelect = document.getElementById("scenarioSelect");
+      scenarioSelect.value = activeScenario;
+      const userSelect = document.getElementById("userSelect");
+      userSelect.innerHTML = USERS.map(item => `<option value="${item.id}">${item.name} · ${item.role}</option>`).join("");
+      userSelect.value = currentUserId;
+    }
+
+    function renderKpis() {
+      const statusMap = { DRAFT: "草稿", ACTIVE: "审批中", RETURNED: "已退回", COMPLETED: "已完成" };
+      const task = selectedTask();
+      const nodeName = instance.currentNode === "END" ? "流程结束" : (currentNode()?.name || "-");
+      const currentPaths = task ? flow().nodes.find(item => item.id === task.nodeId).paths : [];
+      const enabledCount = currentPaths.filter(item => evaluate(item.condition, item.target).enabled).length;
+      document.getElementById("statusKpi").textContent = statusMap[instance.status] || instance.status;
+      document.getElementById("statusSub").textContent = instance.id;
+      document.getElementById("nodeKpi").textContent = nodeName;
+      document.getElementById("nodeSub").textContent = instance.currentNode;
+      document.getElementById("taskKpi").textContent = openTasks().length;
+      document.getElementById("taskSub").textContent = `当前用户 ${tasksForCurrentUser().length} 条`;
+      document.getElementById("pathKpi").textContent = enabledCount;
+      document.getElementById("pathSub").textContent = task ? `${task.nodeName} 可选路径` : "无待处理路径";
+      document.getElementById("ruleKpi").textContent = flow().policies.length;
+      document.getElementById("ruleSub").textContent = flow().owner;
+      document.getElementById("instanceTitle").textContent = `${flow().name} · ${statusMap[instance.status] || instance.status}`;
+      document.getElementById("instanceSub").textContent = task
+        ? `当前待办：${task.nodeName} / ${user(task.assigneeId).name}`
+        : "当前没有待办任务";
+    }
+
+    function renderUsers() {
+      const userList = document.getElementById("userList");
+      const visible = USERS.filter(item => ["IT", "财富", "财务", "行政", "合规", "采购", "委员会"].includes(item.group));
+      userList.innerHTML = visible.map(item => {
+        const count = instance.tasks.filter(task => task.status === "OPEN" && task.assigneeId === item.id).length;
+        return `
+          <button class="user-card ${item.id === currentUserId ? "active" : ""}" data-user="${item.id}" type="button">
+            <div class="avatar ${item.tone}">${item.name.slice(0, 1)}</div>
+            <div>
+              <div class="user-name"><span>${item.name}</span>${count ? `<span class="tag blue">${count}</span>` : ""}</div>
+              <div class="user-role">${item.role}</div>
+            </div>
+          </button>
+        `;
+      }).join("");
+      userList.querySelectorAll("[data-user]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          currentUserId = btn.dataset.user;
+          currentTaskId = tasksForCurrentUser()[0]?.id || currentTaskId;
+          render();
+        });
+      });
+
+      const taskList = document.getElementById("taskList");
+      const tasks = tasksForCurrentUser();
+      taskList.innerHTML = tasks.length ? tasks.map(task => `
+        <button class="task-card ${task.id === currentTaskId ? "active" : ""}" data-task="${task.id}" type="button">
+          <strong>${task.nodeName}</strong>
+          <span>${flow().name} / ${task.createdAt}</span>
+        </button>
+      `).join("") : `<div class="empty">当前用户没有待办。可以切换到下一审批人，或点击“自动推进一步”。</div>`;
+      taskList.querySelectorAll("[data-task]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          currentTaskId = btn.dataset.task;
+          render();
+        });
+      });
+    }
+
+    function renderForm() {
+      const task = selectedTask();
+      const fields = document.getElementById("formFields");
+      const isDraft = task?.nodeId === "draft";
+      fields.innerHTML = flow().fields.map(item => {
+        const editable = isDraft && item.editable && task?.assigneeId === currentUserId;
+        const value = instance.values[item.name] ?? "";
+        const required = item.required ? `<span class="tag amber">必填</span>` : `<span class="tag">可选</span>`;
+        const cls = item.type === "textarea" ? "field full" : "field";
+        let control = "";
+        if (item.type === "select") {
+          control = `<select class="select ${editable ? "" : "readonly"}" data-field="${item.name}" ${editable ? "" : "disabled"}>${item.options.map(opt => `<option value="${opt}" ${opt === value ? "selected" : ""}>${opt}</option>`).join("")}</select>`;
+        } else if (item.type === "textarea") {
+          control = `<textarea class="textarea ${editable ? "" : "readonly"}" data-field="${item.name}" ${editable ? "" : "readonly"}>${value}</textarea>`;
+        } else {
+          control = `<input class="input ${editable ? "" : "readonly"}" data-field="${item.name}" type="${item.type}" value="${value}" ${editable ? "" : "readonly"} />`;
+        }
+        return `<div class="${cls}"><label>${item.name}${required}</label>${control}</div>`;
+      }).join("");
+      fields.querySelectorAll("[data-field]").forEach(control => {
+        control.addEventListener("input", () => updateValue(control.dataset.field, control.value));
+        control.addEventListener("change", () => updateValue(control.dataset.field, control.value));
+      });
+
+      const approvalBox = document.getElementById("approvalBox");
+      if (!task) {
+        approvalBox.innerHTML = `<div class="empty">流程已结束或当前无待办。</div>`;
+        return;
+      }
+      const canHandle = task.assigneeId === currentUserId;
+      const nodeInfo = flow().nodes.find(item => item.id === task.nodeId);
+      if (nodeInfo?.draft) {
+        approvalBox.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <div>
+              <div class="panel-title">起草提交</div>
+              <div class="panel-sub">${canHandle ? "当前用户可提交该申请。" : "该待办不属于当前用户。"}</div>
+            </div>
+            <span class="tag blue">无需结论性意见</span>
+          </div>
+        `;
+        return;
+      }
+      approvalBox.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div>
+            <div class="panel-title">审批处理</div>
+            <div class="panel-sub">${canHandle ? "当前用户可处理该待办。" : "该待办不属于当前用户，切换用户后可处理。"}</div>
+          </div>
+          <div class="segmented">
+            <button class="${opinion === "同意" ? "active" : ""}" data-opinion="同意" type="button">同意</button>
+            <button class="${opinion === "不同意" ? "active" : ""}" data-opinion="不同意" type="button">不同意</button>
+          </div>
+        </div>
+        <textarea class="textarea" id="commentBox" placeholder="填写审批意见，例如：同意，材料完整。"></textarea>
+      `;
+      approvalBox.querySelectorAll("[data-opinion]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          opinion = btn.dataset.opinion;
+          render();
+        });
+      });
+    }
+
+    function renderPaths() {
+      const task = selectedTask();
+      const el = document.getElementById("pathList");
+      if (!task) {
+        el.innerHTML = `<div class="empty">没有可提交路径。</div>`;
+        return;
+      }
+      const nodeInfo = flow().nodes.find(item => item.id === task.nodeId);
+      el.innerHTML = nodeInfo.paths.map((item, index) => {
+        const result = evaluate(item.condition, item.target);
+        const canHandle = task.assigneeId === currentUserId;
+        const enabled = result.enabled && canHandle;
+        return `
+          <button class="path-button ${enabled ? "enabled" : "disabled"}" data-path="${index}" ${enabled ? "" : "disabled"} type="button">
+            <span>
+              <strong>${item.name}</strong>
+              <small>${item.condition || "无条件"} / 目标：${targetName(item.target)}</small>
+            </span>
+            <span class="tag ${result.enabled ? "green" : "red"}">${enabled ? "可提交" : result.reason}</span>
+          </button>
+        `;
+      }).join("");
+      el.querySelectorAll("[data-path]").forEach(btn => {
+        btn.addEventListener("click", () => submitPath(nodeInfo.paths[Number(btn.dataset.path)]));
+      });
+    }
+
+    function targetName(target) {
+      if (target === "END") return "流程结束";
+      if (target === "DRAFT") return "起草";
+      return flow().nodes.find(item => item.id === target)?.name || target;
+    }
+
+    function renderDiagram() {
+      const done = new Set(instance.completedNodes);
+      const el = document.getElementById("diagram");
+      const nodes = [...flow().nodes, { id: "END", name: "流程结束", role: "-", paths: [] }];
+      el.innerHTML = nodes.map(item => {
+        const cls = item.id === instance.currentNode ? "current" : done.has(item.id) ? "done" : item.id === "END" ? "end" : "waiting";
+        const assignees = item.id === "END" ? "" : (flow().assignees[item.id] || []).map(id => id === "initiator" ? instance.initiator : id).map(id => user(id).name).join("、");
+        return `
+          <div class="node ${cls}">
+            <div class="node-id">${item.id}</div>
+            <strong>${item.name}</strong>
+            <small>${item.role || "-"}${assignees ? " / " + assignees : ""}</small>
+            <span class="tag ${cls === "current" ? "blue" : cls === "done" ? "green" : ""}">${nodeStatus(item.id, done)}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function nodeStatus(id, done) {
+      if (id === instance.currentNode) return "当前";
+      if (done.has(id)) return "已处理";
+      if (id === "END" && instance.status === "COMPLETED") return "完成";
+      return "未到达";
+    }
+
+    function renderDetailTable() {
+      const tbody = document.getElementById("detailTable");
+      tbody.innerHTML = flow().nodes.map(item => `
+        <tr>
+          <td><strong>${item.name}</strong><br><span class="panel-sub">${item.id}</span></td>
+          <td>${item.role || "起草人"}</td>
+          <td>
+            <div class="path-lines">
+              ${item.paths.map(pathItem => `
+                <div class="path-line">
+                  <strong>${pathItem.name}</strong>
+                  <span>${pathItem.condition || "无条件"}</span>
+                  <span>${targetName(pathItem.target)}</span>
+                </div>
+              `).join("")}
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function renderPolicies() {
+      const el = document.getElementById("policyList");
+      el.innerHTML = flow().policies.map((item, index) => `
+        <div class="policy-item">
+          <strong><span class="tag ${index === 0 ? "blue" : index === 1 ? "amber" : "purple"}">${item[0]}</span></strong>
+          <span>${item[1]}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderTimeline() {
+      const el = document.getElementById("timeline");
+      el.innerHTML = instance.logs.length ? instance.logs.map((item, index) => `
+        <div class="timeline-item">
+          <div class="dot">${instance.logs.length - index}</div>
+          <div class="timeline-card">
+            <strong>${item.title}</strong>
+            <span>${item.detail}</span>
+            <span>${item.at} / ${item.type}</span>
+          </div>
+        </div>
+      `).join("") : `<div class="empty">暂无轨迹。</div>`;
+    }
+
+    function renderJson() {
+      const publicState = {
+        activeFlow: flow().id,
+        currentUser: user(currentUserId),
+        instance,
+        openTasks: openTasks(),
+        enabledPaths: selectedTask()
+          ? flow().nodes.find(item => item.id === selectedTask().nodeId).paths.map(item => ({ ...item, evaluation: evaluate(item.condition, item.target) }))
+          : []
+      };
+      document.getElementById("jsonBox").textContent = JSON.stringify(publicState, null, 2);
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(item => item.classList.remove("active"));
+        document.querySelectorAll(".view").forEach(item => item.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.view).classList.add("active");
+      });
+    });
+
+    document.getElementById("scenarioSelect").addEventListener("change", event => {
+      activeScenario = event.target.value;
+      newInstance();
+    });
+
+    document.getElementById("userSelect").addEventListener("change", event => {
+      currentUserId = event.target.value;
+      currentTaskId = tasksForCurrentUser()[0]?.id || currentTaskId;
+      render();
+    });
+
+    document.getElementById("resetButton").addEventListener("click", newInstance);
+    document.getElementById("autoButton").addEventListener("click", autoStep);
+
+    newInstance();
+  </script>
+</body>
+</html>

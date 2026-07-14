@@ -1,0 +1,78 @@
+{
+  "scenario_id": "expense_v1",
+  "process_target_path": "data/cases/expense_reimbursement/standard/target.json",
+  "org_seed_path": "data/org/org_seed.json",
+  "case_count": 400,
+  "start_date": "2026-01-01",
+  "end_date": "2026-06-30",
+  "arrival": {
+    "rate_per_day": 2.6,
+    "peak_multiplier": {
+      "month_end": 1.5
+    }
+  },
+  "node_dwell_params": {
+    "dept_manager_approve": {
+      "distribution": "lognormal",
+      "mu": 1.609,
+      "sigma": 0.55
+    },
+    "finance_review": {
+      "distribution": "lognormal",
+      "mu": 1.792,
+      "sigma": 0.55
+    },
+    "finance_lead_approve": {
+      "distribution": "lognormal",
+      "mu": 2.303,
+      "sigma": 0.5
+    }
+  },
+  "decision_probabilities": {
+    "dept_manager_approve": 0.88,
+    "finance_review": 0.93,
+    "finance_lead_approve": 0.94
+  },
+  "assumed_sla_days": {
+    "dept_manager_approve": 1.0,
+    "finance_review": 1.0,
+    "finance_lead_approve": 2.0
+  },
+  "leave_type_weights": {},
+  "leave_days_range": {},
+  "numeric_case_attributes": {
+    "报销总额": [
+      300.0,
+      65000.0
+    ]
+  },
+  "injected_defects": [
+    {
+      "defect_id": "slow_finance_lead_approve",
+      "type": "慢环节",
+      "target_node_id": "finance_lead_approve",
+      "params": {
+        "dwell_multiplier": 8.0
+      },
+      "affected_case_ratio": 0.7
+    },
+    {
+      "defect_id": "return_dept_manager_approve",
+      "type": "高退回率",
+      "target_node_id": "dept_manager_approve",
+      "params": {
+        "return_probability": 0.15
+      },
+      "affected_case_ratio": 1.0
+    },
+    {
+      "defect_id": "manual_intervention_case",
+      "type": "线下人工介入",
+      "target_node_id": null,
+      "params": {},
+      "affected_case_ratio": 0.05
+    }
+  ],
+  "random_seed": 42,
+  "max_resubmit_loops": 4
+}

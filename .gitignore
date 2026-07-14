@@ -1,0 +1,21 @@
+.DS_Store
+**/.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.env
+.venv/
+runs/
+data/analytics/**/event_log_*.jsonl
+data/analytics/**/custom_metrics.json
+data/analytics/**/diagnosis_history.json
+*.bkp
+~$*
+data/rag_index/
+
+# 运行态 / 生成物（体量大 + 含脱敏前残留，绝不入库；克隆后由应用自行播种）
+data/runtime/
+*.bak
+*.bak-*

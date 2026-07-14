@@ -1,0 +1,47 @@
+{
+  "scenario_id": "expense_v1",
+  "defect_catalog": [
+    {
+      "defect_id": "slow_finance_lead_approve",
+      "type": "慢环节",
+      "target_node_id": "finance_lead_approve",
+      "params": {
+        "dwell_multiplier": 8.0
+      },
+      "affected_case_ratio": 0.7
+    },
+    {
+      "defect_id": "return_dept_manager_approve",
+      "type": "高退回率",
+      "target_node_id": "dept_manager_approve",
+      "params": {
+        "return_probability": 0.15
+      },
+      "affected_case_ratio": 1.0
+    },
+    {
+      "defect_id": "manual_intervention_case",
+      "type": "线下人工介入",
+      "target_node_id": null,
+      "params": {},
+      "affected_case_ratio": 0.05
+    }
+  ],
+  "summary": {
+    "case_count": 400,
+    "event_count": 1141,
+    "case_status_counts": {
+      "正常结束": 400
+    },
+    "defect_case_counts": {
+      "return_dept_manager_approve": 400,
+      "slow_finance_lead_approve": 64,
+      "manual_intervention_case": 8
+    },
+    "defect_event_counts": {
+      "return_dept_manager_approve": 474,
+      "slow_finance_lead_approve": 68,
+      "manual_intervention_case": 8
+    }
+  }
+}

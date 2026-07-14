@@ -1,0 +1,233 @@
+{
+  "review_metadata": {
+    "review_status": "draft",
+    "reviewer": "claude_authored_pending_user_review",
+    "reviewed_at": "2026-07-11T00:00:00+00:00",
+    "review_notes": "用印申请流程演示用轻量案例：起草→法务审核→行政审批→印章管理员用印→结束。不纳入 eval harness，仅用于流程管理/发起页广度展示。"
+  },
+  "deterministic_process_definition": {
+    "meta": {
+      "process_id": "SEAL-001",
+      "process_name": "用印申请流程",
+      "version": "V1.0.0",
+      "responsible_dept": "行政办公室",
+      "description": "员工发起公章/合同专用章/法人章使用申请，经法务审核、行政审批后，由印章管理员执行盖章。",
+      "applicant_scope": "公司全体在职员工",
+      "entry_point": "OA系统"
+    },
+    "form_fields": [
+      {
+        "seq": 1,
+        "field_name": "申请人",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [],
+        "component_type": "只读文本",
+        "logic_description": "自动带出当前登录人姓名，不可编辑。",
+        "default_value": "当前登录人",
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 2,
+        "field_name": "所属部门",
+        "required_stages": [],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [],
+        "component_type": "只读文本",
+        "logic_description": "自动带出申请人所属部门，不可编辑。",
+        "default_value": "申请人所属部门",
+        "options": null,
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 3,
+        "field_name": "印章类型",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "下拉单选",
+        "logic_description": "固定三类。",
+        "default_value": null,
+        "options": [
+          "公章",
+          "合同专用章",
+          "法人章"
+        ],
+        "placeholder": null,
+        "max_length": null
+      },
+      {
+        "seq": 4,
+        "field_name": "用印事由",
+        "required_stages": [
+          "draft"
+        ],
+        "visible_stages": [
+          "all"
+        ],
+        "editable_stages": [
+          "draft"
+        ],
+        "component_type": "多行文本",
+        "logic_description": "简述用印事由。",
+        "default_value": null,
+        "options": null,
+        "placeholder": "请输入用印事由",
+        "max_length": null
+      }
+    ],
+    "flow_nodes": [
+      {
+        "node_id": "draft",
+        "node_name": "起草",
+        "is_draft": true,
+        "handler": null,
+        "opinion": null,
+        "opinion_label": null,
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送法务审核",
+            "condition": null,
+            "target_node_id": "legal_review"
+          }
+        ]
+      },
+      {
+        "node_id": "legal_review",
+        "node_name": "法务审核",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "特定部门",
+          "role": "用印申请_法务审核",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "法务审核意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送行政审批",
+            "condition": "结论性意见=同意",
+            "target_node_id": "admin_approve"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      },
+      {
+        "node_id": "admin_approve",
+        "node_name": "行政审批",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "特定部门",
+          "role": "用印申请_行政审批",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "行政审批意见",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "送印章管理员用印",
+            "condition": "结论性意见=同意",
+            "target_node_id": "seal_execute"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      },
+      {
+        "node_id": "seal_execute",
+        "node_name": "印章管理员用印",
+        "is_draft": false,
+        "handler": {
+          "mode": "单选-单人处理",
+          "source": "特定部门",
+          "role": "用印申请_印章管理员",
+          "source_field": null
+        },
+        "opinion": {
+          "conclusive_required": true,
+          "detail_required": false,
+          "conclusive_options": [
+            "同意",
+            "不同意"
+          ]
+        },
+        "opinion_label": "用印执行确认",
+        "time_limit_days": null,
+        "submit_paths": [
+          {
+            "path_name": "流程结束",
+            "condition": "结论性意见=同意",
+            "target_node_id": "END"
+          },
+          {
+            "path_name": "退回起草",
+            "condition": "结论性意见=不同意",
+            "target_node_id": "DRAFT"
+          }
+        ]
+      }
+    ],
+    "attachments": [
+      {
+        "attachment_type": "用印文件",
+        "upload_stages": [
+          "draft"
+        ],
+        "required_stages": [
+          "draft"
+        ],
+        "required_condition": null
+      }
+    ],
+    "roles": null
+  },
+  "clarification_targets": [],
+  "accepted_optional_clarifications": [],
+  "forbidden_clarifications": [],
+  "guardrail_targets": {
+    "ignore_noise": [],
+    "offline_flow_policy": "",
+    "binary_source_policy": ""
+  },
+  "evidence_map": {},
+  "eval_weights": {}
+}

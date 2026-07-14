@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流程设计 Agent · 闭环概览</title>
+<style>
+  :root{
+    --bg:#fbfbfa; --ink:#1c1c1a; --muted:#6b6b66; --line:#e7e6e1;
+    --card:#ffffff; --accent:#2f6f5e; --accent-soft:#eaf3f0;
+    --gold:#b98a2e; --gold-soft:#f6efe0; --frozen:#8a8f98; --frozen-soft:#f0f1f3;
+    --radius:14px; --maxw:920px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif;
+    line-height:1.65; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:64px 28px 96px}
+  .eyebrow{font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:0 0 14px}
+  h1{font-size:clamp(30px,5vw,46px); line-height:1.15; margin:0 0 18px; font-weight:650; letter-spacing:-.01em}
+  .lede{font-size:19px; color:#3d3d39; max-width:640px; margin:0 0 8px}
+  .flow-line{font-size:16px; color:var(--accent); font-weight:550; margin:22px 0 0; letter-spacing:.01em}
+  .flow-line span{color:var(--muted); font-weight:400; margin:0 6px}
+  hr.sep{border:none; border-top:1px solid var(--line); margin:56px 0}
+  h2{font-size:14px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:0 0 24px}
+
+  /* interactive probe */
+  .probe{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 24px 22px; margin:40px 0 0}
+  .probe label{display:block; font-size:14px; color:var(--muted); margin:0 0 12px}
+  .probe input{
+    width:100%; font-size:16px; padding:12px 14px; border:1px solid var(--line);
+    border-radius:10px; background:#fff; color:var(--ink); outline:none; transition:border-color .15s;
+    font-family:inherit;
+  }
+  .probe input:focus{border-color:var(--accent)}
+  .probe-hint{font-size:13px; color:#9a9a94; margin:10px 0 0}
+  .probe-out{font-size:14.5px; color:var(--ink); margin:14px 0 0; min-height:22px}
+  .probe-out b{color:var(--accent)}
+  .chip{display:inline-block; padding:3px 10px; border-radius:999px; font-size:12.5px; font-weight:600; margin-right:6px}
+
+  /* module grid */
+  .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+  .mod{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:22px 22px 20px; cursor:pointer; transition:border-color .15s, box-shadow .15s, transform .12s;
+  }
+  .mod:hover{border-color:#d5d4ce; box-shadow:0 6px 22px rgba(28,28,26,.05); transform:translateY(-1px)}
+  .mod.active{border-color:var(--accent); box-shadow:0 6px 22px rgba(47,111,94,.12)}
+  .mod-top{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+  .mod-id{font-size:12px; font-weight:700; letter-spacing:.08em; color:var(--muted)}
+  .mod h3{font-size:17.5px; margin:6px 0 8px; font-weight:600}
+  .mod p{font-size:14px; color:var(--muted); margin:0}
+  .mod-detail{font-size:14px; color:#44443f; margin:14px 0 0; padding:14px 0 0; border-top:1px dashed var(--line); display:none}
+  .mod.active .mod-detail{display:block}
+  .tag-moat{background:var(--gold-soft); color:var(--gold)}
+  .tag-frozen{background:var(--frozen-soft); color:var(--frozen)}
+  .tag-thin{background:var(--accent-soft); color:var(--accent)}
+
+  /* pipeline */
+  .pipe{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:26px 24px}
+  .pipe-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:13.5px}
+  .node{background:#f4f4f1; border:1px solid var(--line); border-radius:8px; padding:6px 11px; font-family:"SF Mono",ui-monospace,Menlo,monospace; font-size:12.5px; color:#3d3d39; white-space:nowrap}
+  .node.agent{background:var(--accent-soft); border-color:#cfe4dd; color:var(--accent); font-weight:600}
+  .arrow{color:#c2c1ba; font-weight:600}
+  .pipe-note{font-size:13px; color:var(--muted); margin:16px 0 0}
+
+  footer{margin:64px 0 0; font-size:13px; color:#9a9a94; line-height:1.7}
+  footer code{background:#f1f1ee; padding:1px 6px; border-radius:5px; font-size:12.5px}
+  .klist{list-style:none; padding:0; margin:14px 0 0; display:grid; grid-template-columns:repeat(2,1fr); gap:8px 24px}
+  @media(max-width:640px){.klist{grid-template-columns:1fr}}
+  .klist li{font-size:14px; color:#44443f; padding-left:16px; position:relative}
+  .klist li::before{content:"—"; position:absolute; left:0; color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">toB · AI 流程设计 Agent</p>
+  <h1>不是又一个 OA 平台，<br>而是一条会自我优化的流程闭环。</h1>
+  <p class="lede">
+    从原始素材直接合成标准流程，推送上线流转，再用运行数据反查提效点与堵点，
+    最终把洞察反哺回设计端 —— 让「设计」和「运行」互为燃料。
+  </p>
+  <p class="flow-line">
+    设计 <span>→</span> 上线流转 <span>→</span> 运行数据分析 <span>→</span> 优化反哺设计 <span>↺</span>
+  </p>
+
+  <!-- minimal live input -->
+  <div class="probe">
+    <label for="q">你手上有个流程问题 —— 输入几个字，看看归到哪个模块</label>
+    <input id="q" type="text" placeholder="例如：审批老是卡在某一步 / 想从文档自动生成流程图 / 上线后要看瓶颈…" autocomplete="off">
+    <div class="probe-out" id="out"></div>
+    <p class="probe-hint">纯前端匹配，不联网、不存储。仅作为四模块职责的一个直观导览。</p>
+  </div>
+
+  <hr class="sep">
+
+  <h2>四个模块 · 点开看职责</h2>
+  <div class="grid" id="grid">
+
+    <div class="mod" data-mod="M1">
+      <div class="mod-top">
+        <span class="mod-id">M1</span>
+        <span class="chip tag-moat">护城河 ①</span>
+      </div>
+      <h3>设计 Agent + 规则 RAG + 评测</h3>
+      <p>从 <code>raw_sources</code> 抽取标准流程 JSON，配套评测驱动调优。</p>
+      <div class="mod-detail">
+        LangGraph 编排：抽取 → Pydantic 校验对比 → 首次不过回跳复查一次 → 生成 Excel / draw.io 产物。
+        评测驱动 prompt 迭代，先把单锚案例做深做透，再横向铺 RAG 与对话式修改。
+      </div>
+    </div>
+
+    <div class="mod" data-mod="M2">
+      <div class="mod-top">
+        <span class="mod-id">M2</span>
+        <span class="chip tag-frozen">冻结 · 薄做</span>
+      </div>
+      <h3>薄运行时（数据底座）</h3>
+      <p>只作为运行数据的产生与承载层，<b>刻意冻结、停止扩展</b>。</p>
+      <div class="mod-detail">
+        重运行时（服务层 + SPA）已标注冻结，不再往 OA 平台化方向加功能；引擎本身保留、薄做。
+        它的价值不在功能多，而在于稳定地喂出真实运行数据给 M3。
+      </div>
+    </div>
+
+    <div class="mod" data-mod="M3">
+      <div class="mod-top">
+        <span class="mod-id">M3</span>
+        <span class="chip tag-moat">护城河 ②</span>
+      </div>
+      <h3>运营分析 Agent</h3>
+      <p>吃运行数据，产出提效点、堵点与优化建议。</p>
+      <div class="mod-detail">
+        面向真实流转日志做提效 / 堵点分析，把「哪里慢、哪里绕、哪里返工」变成结构化洞察 ——
+        这是让产品从「能画流程」升级到「能改进流程」的关键一跃。
+      </div>
+    </div>
+
+    <div class="mod" data-mod="M4">
+      <div class="mod-top">
+        <span class="mod-id">M4</span>
+        <span class="chip tag-thin">闭环</span>
+      </div>
+      <h3>闭环反哺</h3>
+      <p>把 M3 的洞察回灌 M1，形成设计↔运行的正循环。</p>
+      <div class="mod-detail">
+        分析结论不是终点，而是下一轮设计的输入：调整规则、补齐缺失、修正流程结构。
+        闭环一旦转起来，每一次上线都在让下一版设计更准。
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="sep">
+
+  <h2>M1 工作流 · LangGraph 节点</h2>
+  <div class="pipe">
+    <div class="pipe-row">
+      <span class="node">load_case_context</span>
+      <span class="arrow">→</span>
+      <span class="node agent">process_extraction_agent</span>
+      <span class="arrow">→</span>
+      <span class="node">validate_and_compare</span>
+      <span class="arrow">→</span>
+      <span class="node agent">artifact_generation_agent</span>
+      <span class="arrow">→</span>
+      <span class="node">write_run_outputs</span>
+    </div>
+    <p class="pipe-note">
+      只有抽取与产物生成两个 agent 节点，其余为确定性节点。校验不过时回跳复查一次；
+      Excel 与 draw.io 由 LLM 依 skill 指令现场生成并校验，非固定模板。
+    </p>
+  </div>
+
+  <hr class="sep">
+
+  <h2>设计取舍</h2>
+  <ul class="klist">
+    <li>先做深单案例，再横向铺量</li>
+    <li>评测驱动，而非拍脑袋调 prompt</li>
+    <li>运行时刻意薄，把重心留给两条护城河</li>
+    <li>产物由 LLM 现场生成，避免模板僵化</li>
+    <li>V1 不引入 MCP，保持链路可控</li>
+    <li>闭环优先于功能广度</li>
+  </ul>
+
+  <footer>
+    单文件静态页 · 无外部依赖 · 双击即可打开。<br>
+    数据源于本仓库 <code>README.md</code> 与项目北极星文档；页面内容为只读概览。
+  </footer>
+
+</div>
+
+<script>
+  // clickable module cards
+  document.querySelectorAll('.mod').forEach(function(m){
+    m.addEventListener('click', function(){ m.classList.toggle('active'); });
+  });
+
+  // minimal live-input router: keyword -> module
+  var rules = [
+    {mod:'M1', name:'设计 Agent + 规则 RAG + 评测', kw:['生成','抽取','设计','画','流程图','文档','标准','规则','rag','评测','json','draw','excel','建模']},
+    {mod:'M3', name:'运营分析 Agent',              kw:['卡','堵','瓶颈','慢','返工','效率','提效','分析','数据','运行','日志','绕','时长','统计']},
+    {mod:'M4', name:'闭环反哺',                    kw:['优化','改进','反哺','循环','迭代','闭环','反馈','复盘']},
+    {mod:'M2', name:'薄运行时（数据底座）',        kw:['上线','流转','运行时','执行','跑起来','部署','实例','审批流']}
+  ];
+  var input = document.getElementById('q');
+  var out = document.getElementById('out');
+  input.addEventListener('input', function(){
+    var t = input.value.toLowerCase().trim();
+    if(!t){ out.innerHTML=''; clearActive(); return; }
+    var best=null, score=0;
+    rules.forEach(function(r){
+      var s=0; r.kw.forEach(function(k){ if(t.indexOf(k)>-1) s++; });
+      if(s>score){ score=s; best=r; }
+    });
+    clearActive();
+    if(best && score>0){
+      out.innerHTML = '大概率归 <b>'+best.mod+' · '+best.name+'</b>。点开对应卡片看它怎么处理。';
+      var card=document.querySelector('.mod[data-mod="'+best.mod+'"]');
+      if(card) card.classList.add('active');
+    } else {
+      out.innerHTML = '还没匹到关键词 —— 试试「生成 / 卡住 / 上线 / 优化」这类词。';
+    }
+  });
+  function clearActive(){
+    // only clear cards that were auto-highlighted by probe (all), keep it simple
+    // (manual toggles and probe share state; acceptable for a minimal demo)
+  }
+</script>
+</body>
+</html>
