@@ -19,3 +19,8 @@ data/rag_index/
 data/runtime/
 *.bak
 *.bak-*
+
+# 真实内部文档 / 参考资料（不入公开库；本地保留）
+流程样例库/
+doc/references/
+data/cases/*/reference/

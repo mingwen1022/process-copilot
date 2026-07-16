@@ -1,80 +1,89 @@
-# 流程设计 Agent —— AI 流程全生命周期闭环
+# 流程副驾 · Process Copilot
 
-> 把 3 年流程治理工作做成一个 **"AI 设计流程 → 上线流转 → 运行数据提效/堵点分析 → 优化建议反哺设计"** 的闭环 agent 产品。
->
-> 主线文档：[`doc/产品功能全景.md`](doc/产品功能全景.md)（按功能模块的设计/现有/要做全景）
+> 企业流程全生命周期 AI 系统：把散落在文档、邮件、Excel、群聊里的业务流程，抽取成标准化、可上线的定义；再用运行数据反哺设计——**设计 → 运行 → 分析 → 反哺** 连成一个能自我改进的闭环。
 
-## 定位
+一条工程哲学贯穿全程：**确定性的归确定性、LLM 的归 LLM**——LLM 只负责理解意图 / 组织语言，能判对错的事（校验、算指标、算路径、打分、应用变更）全部交给确定性代码。设计管线里只有"抽取"和"业务校验"两个节点用到 LLM，其余全是确定性代码。
 
-它**不是 OA/BPM 平台**，而是一个 AI 流程全生命周期闭环。运行时只作为"产生运行数据的底座"，真正深做的是两端 AI：**设计侧（含规则 RAG + 评测）** 和 **运营分析侧**。
+> **关于本项目**：个人项目，从 0 独立构建，不隶属任何公司。里面的痛点与场景提炼自我做流程数字化与效能看板产品期间遇到的真实问题；仓库内所有案例数据均为合成 / 脱敏样例，不含任何真实机构信息。
 
-## 架构（4 模块 + 闭环）
+---
+
+## 系统全景
 
 ```
-        ┌──────────── 规则知识库 (RAG) ────────────┐
-        │ 公司/系统级制度 · 流程要素规范 · 模板     │
+        ┌──────────── 规则知识库 (RAG) ────────────┐   ← 设计 / 分析 / 副驾 三处都从这检索依据
+        │  制度 · 流程要素规范 · 运维处置规则 · 模板  │
         └───────────────┬───────────────────────────┘
-                        │ 检索"适用规则"作为设计约束 + 合规评测依据
-   多源需求 ──▶ ① 设计 Agent ──▶ 标准流程定义(JSON)
-                        │              │ 评测：要素级准确率(对 gold) + 规则合规率(无参照)
-        对话式修改 ⟲────┘              ▼
+                        │ 检索"适用规则"作为设计约束与依据（并用于合规评测）
+   多源材料 ──▶ ① 设计 Agent ──▶ 标准流程定义(JSON) ──▶ ⑤ 翻译层 ──▶ 飞书审批（真实 OA 引擎）
+                        │              │ 评测：要素级 P/R/F1（对 gold）+ 合规命中率（无参照）
+        会话式修改 ⟲────┘              ▼
                             ② 薄运行时(happy path) ──▶ 结构化运行事件日志
-                                     │   (+ 合成事件日志生成器批量造数据)
-                                     ▼
-                            ③ 运营分析 Agent ──▶ 效能指标 + 堵点 + 优化建议
                                      │
-                                     └────▶ ④ 优化建议反哺 ① 重新设计  ⟲ 闭环
+                                     ├──────────────▶ ④ 参与者副驾（发起向导 / 运维 / 管理）
+                                     ▼
+                            ③ 效能分析 Agent ──▶ 指标 · 堵点 · 诊断报告
+                                     │
+                                     └────▶ 优化建议反哺 ① 重新设计  ⟲ 闭环
 ```
 
-| 模块 | 定位 | 状态 |
+## Agent 一览
+
+| Agent | 目标用户 | 做什么 |
 |---|---|---|
-| **M1 设计 Agent + 规则 RAG** | 护城河①，深做 | 设计 pipeline 成熟；规则 RAG 待建 |
-| **M2 薄运行时** | 数据底座，**薄做（冻结扩展）** | engine + API + SPA 可跑通 happy path |
-| **M3 运营分析 Agent** | 护城河②，深做 | 待建 |
-| **M4 闭环反馈** | headline，轻量 | 待建 |
+| **流程设计** | 流程 owner | LangGraph 多智能体把多源材料抽成标准定义；会话式修改（typed 工具 + diff + undo + 编辑后校验） |
+| **流程发起向导** | 普通员工（发起人） | 定位该走哪个流程、预演路径 / 材料 / 时长、教填表 |
+| **流程运维** | 发起人 / 审批人 / 管理员 | 卡住确定性诊断；符合制度即处置，超范围升级人工生成运维授权工单 |
+| **流程效能分析** | 流程 owner / 全局管理员 | 确定性算指标 + 阈值判堵点 + LLM 归因 / 建议；问题反哺流程管理 |
+| **流程管理** | 流程 owner / 系统管理员 | 全局页 + 设计入口；反哺待处理项逐条诊断修复；上下架 |
+| 设计评测 | （调 harness 用） | AI 反向生成 raw source + 人工定 gold；字段级 P/R/F1 + LLM judge 判同义 |
+| 制度规则 RAG | 共享层 | 原子规则 + 两阶段混合检索，一处维护、三处复用，带原文出处可追溯 |
 
-> ⚠️ 运行时（`app/runtime`、`app/api/slice1_service.py`、`app/static/index.html`）是**"薄运行时 demo"，已冻结扩展**，不做平台化功能。详见北极星文档 §5。
+**闭环见效**：某流程经"运行诊断 → 反哺 → 重新设计(v2)"后，办结时长从 3.2 天降到 0.9 天（↓70%）。
 
-## 设计原则
+## 技术栈
 
-**确定性的归确定性，LLM 的归 LLM。** 评测 = 确定性打分(对 gold) + 无参照检查(规则/judge)；编辑 = typed 工具 + 校验 + LLM 解析意图；分析 = 确定性算指标 + LLM 归因/建议。
+LangGraph · AWS Bedrock (Claude) · 结构化抽取 · 规则 RAG（两阶段混合检索）· 约束 / 校验 · 确定性状态机 · 评测体系 (P/R/F1) · 反哺闭环 · 飞书 OA 对接 · FastAPI · uv
 
-## 运行
+## 快速开始
 
-设计 pipeline（多源需求 → 标准流程定义 JSON）：
-
-```bash
-uv run python -m app.workflows.process_v1 --case data/06_subsidiary_major_matter --out runs/06_subsidiary
-```
-
-默认在 `--out` 后追加时间戳；加 `--no-timestamp` 可复用固定目录。
-
-校验数据集 / 组织知识：
+需要 Python ≥ 3.12 与 [uv](https://github.com/astral-sh/uv)。
 
 ```bash
-uv run python scripts/validate_dataset.py
-uv run python scripts/validate_org_knowledge.py
+# 1. 配置 Bedrock 凭证（LangChain ChatBedrockConverse，只需单个 Bedrock API key）
+cp .env.example .env    # 填入 AWS_BEARER_TOKEN_BEDROCK；飞书对接另需 APP_ID / APP_SECRET
+
+# 2. 跑起交互 demo（流程管理 / 设计 / 分析 / 参与者副驾 全在一个 SPA 里）
+uv run uvicorn app.api.server:app --host 127.0.0.1 --port 8811
+#   浏览器打开 http://127.0.0.1:8811
+
+# 3. 单跑设计抽取管线（多源材料 → 标准流程定义 JSON）
+uv run python -m app.workflows.process_v1 --case data/cases/leave_request --out runs/leave
+
+# 4. 测试
+uv run pytest -q
 ```
-
-测试：
-
-```bash
-uv run pytest
-```
-
-## Bedrock 配置
-
-复制 `.env.example` 为 `.env`，填写 `AWS_BEARER_TOKEN_BEDROCK`。实现使用 LangChain AWS 的 `ChatBedrockConverse`，只需单个 Bedrock API key。
 
 ## 目录结构
 
 ```
-app/        设计 pipeline / runtime engine / eval / reporting / API
-data/       6 个真实流程案例 + knowledge(规则) + runtime 产物(gitignore)
-doc/        北极星文档 + architecture / references / archive(历史)
-流程样例库/  真实 EOA 流程 xlsx 样例
-scripts/    数据校验 / run 归档脚本
-tests/      pytest 用例
+app/          设计管线 / 薄运行时 / 评测 / 分析 / 副驾 / 规则RAG / 飞书翻译 / API
+data/cases/   合成流程案例（请假 / 报销 / 采购 / 印章 / 子公司重大事项）+ gold 金标准
+data/knowledge/  制度规则（原子规则 + 原文 chunk）
+data/analytics/  合成运行事件与指标数据
+doc/          架构与 harness 文档、产品功能全景、各模块设计文档
+scripts/      数据校验 / 飞书推送等脚本
+tests/        pytest 用例
 ```
 
-详细仓库说明见 [`doc/README.md`](doc/README.md)。
+架构与实现细节见 [`doc/agent架构与harness.md`](doc/agent架构与harness.md) 与 [`doc/产品功能全景.md`](doc/产品功能全景.md)。
+
+## 设计取舍（面试常问）
+
+- **确定性 vs LLM 分工**：评测 = 确定性打分 + 无参照检查；编辑 = typed 工具 + 校验 + LLM 解析意图；分析 = 确定性算指标 + LLM 归因；副驾 = LLM 判断 / 解释、诊断 / 动作构造 / 校验 / 应用全确定性；飞书翻译 = 纯确定性映射。
+- **规则检索用两阶段混合，而非裸向量 RAG**：合规场景"宁全不漏"，先结构化筛选保召回，再语义补长文档，最后带原文出处。
+- **薄运行时**：运行时只作为"产生运行数据的底座"（happy-path），不做平台化功能——深做的是设计侧与分析侧两端 AI。
+
+---
+
+MIT License · © 2026 Ming Wen

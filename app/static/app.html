@@ -903,8 +903,16 @@
     const resetAllBtn=document.getElementById('todo-reset-all-btn'); if(resetAllBtn) resetAllBtn.style.display = (p==='todo') ? '' : 'none';
     // 副驾大脑：先用页面默认猜一个，数据到位后 renderMy 等会用 setBrain 纠正（如详情页实际是审批项）
     setBrain(BRAIN_OF[p] || 'todo');
+    // 纯数据/调试页没有对口的对话副驾（评测页只是抽取打分可视化），直接把副驾整个藏掉，
+    // 免得沿用上一页的 design 大脑、露出一段跟本页无关的旧对话。
+    const noCopilot = NO_COPILOT.has(p);
+    const bubble = document.getElementById('s-bubble'), note = document.getElementById('note');
+    if (noCopilot) { closePanel(); if (bubble) bubble.style.display = 'none'; if (note) note.style.display = 'none'; }
+    else { if (bubble) bubble.style.display = ''; if (note) note.style.display = ''; }
     if (typeof ensurePage === 'function') ensurePage(p);
   }
+  // 不挂对话副驾的页面（纯数据/调试视图）
+  const NO_COPILOT = new Set(['eval']);
 
   // 切换副驾"大脑"：面板标题/气泡文案/高亮哪个 brain 容器，供 go() 和数据到位后的纠正调用
   function setBrain(brainId){

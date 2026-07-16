@@ -92,7 +92,9 @@ def create_app(
         expense_analytics.seed_insights()
     else:
         ops_copilot = ops_copilot_service
-    launch_copilot = launch_copilot_service or LaunchCopilotService()
+    launch_copilot = launch_copilot_service or LaunchCopilotService(
+        analytics_by_process_id={"LEAVE-001": analytics, "EXPENSE-001": expense_analytics}
+    )
     # 流程总览副驾（流程管理页）：路由 + 编排，不重开一套业务能力——批量修复交前端复用单
     # 流程链路；问结构/问效能直接调用已有服务并透传结果
     from app.copilots.manage_service import ManageCopilotService
@@ -102,6 +104,7 @@ def create_app(
         workflow_design_service=workflow_design,
         analytics_by_workflow_id={"LEAVE-001": analytics, "EXPENSE-001": expense_analytics},
         launch_service=launch_copilot,
+        insight_store=insight_store,
     )
     # 设计评测运行服务：评测模式（选 gold + 载源消融 → 真跑抽取 → 打分入历史）
     from app.eval.eval_run_service import EvalRunService

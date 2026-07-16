@@ -27,9 +27,11 @@ from app.models.text import is_legacy_text_generator
 
 
 class ManageRoute(BaseModel):
-    route: Literal["catalog", "batch_fix", "flow_structure", "analytics", "launch_guide", "general"] = Field(
+    route: Literal["catalog", "batch_fix", "flow_issues", "flow_structure", "analytics", "launch_guide", "general"] = Field(
         description="问题类型：catalog=问流程目录本身（有几条流程、都叫什么、哪些已上架/有待处理项——"
         "不是问某条流程的设计细节或效能，是问「清单」层面的事）；"
+        "flow_issues=问**某一条具体流程**有没有待处理项 / 需不需要优化 / 有什么问题（针对单条，"
+        "不是问全部、也不是问它整体怎么设计的、也不是纯问效能指标），要选出 target_workflow_id；"
         "batch_fix=要求处理/修复待处理事项（不针对单条流程，或要求处理全部）；"
         "flow_structure=以流程 owner/设计者视角，问某条具体流程「整体是怎么设计的」"
         "（有哪些字段/环节/路径、分支逻辑），是对流程定义的静态讲解；"
@@ -58,8 +60,10 @@ def _classify_system_prompt() -> str:
 （给了具体天数/类型）会经过哪些环节、需要什么材料、符不符合条件。也可能是范围外的问题（如
 运维单据处理——目前没有流程级入口，归 general）。
 
-判断关键：问「这条流程整体结构/分支逻辑」→ flow_structure；问「给了具体取值、我会怎么流转/
-符不符合」→ launch_guide（它能按取值确定性预演路径）。
+判断关键：问「这条流程整体结构/分支逻辑」→ flow_structure；问「这条流程有没有待处理项/
+要不要优化/有什么问题」→ flow_issues（针对单条流程列它的待处理项）；问「给了具体取值、我会
+怎么流转/符不符合」→ launch_guide（它能按取值确定性预演路径）。注意区分：问「哪些流程有待
+处理项」（清单层面）是 catalog；问「员工请假申请流程有没有需要处理的」（指名某一条）是 flow_issues。
 
 给你一份流程目录（workflow_id/名称/是否有待处理项/是否支持效能问答）。若问题针对某条具体流程，
 从目录里选出它的 workflow_id 填 target_workflow_id（必须是目录里存在的 id）；问题是跨流程/全局的
@@ -186,6 +190,7 @@ class ManageCopilotService:
         workflow_design_service: Any,
         analytics_by_workflow_id: dict[str, Any] | None = None,
         launch_service: Any | None = None,
+        insight_store: Any | None = None,
         agent: ManageCopilotAgent | None = None,
         model: Any | None = None,
     ) -> None:
@@ -193,6 +198,7 @@ class ManageCopilotService:
         self._workflow_design = workflow_design_service
         self._analytics_by_workflow_id = analytics_by_workflow_id or {}
         self._launch = launch_service  # 复用发起向导：申请人视角问题（该走哪个流程/按取值预演路径/资格）
+        self._insights = insight_store  # 反哺洞察：答"某条流程有没有待处理/优化项"用
         self._agent = agent
         self._model = model
 
@@ -248,6 +254,9 @@ class ManageCopilotService:
             )
             return {"route": "batch_fix", "reply": reply, "flows_with_issues": n}
 
+        if route.route == "flow_issues":
+            return self._flow_issues_answer(route.target_workflow_id, catalog)
+
         if route.route == "flow_structure":
             return self._flow_structure_answer(route.target_workflow_id, catalog, clean, history)
 
@@ -282,6 +291,32 @@ class ManageCopilotService:
                 tags.append("支持效能问答")
             lines.append(f"- {c['name']}（{c['workflow_id']}） · {'、'.join(tags)}")
         return {"route": "catalog", "reply": "\n".join(lines)}
+
+    def _flow_issues_answer(self, workflow_id: str | None, catalog: list[dict[str, Any]]) -> dict[str, Any]:
+        """某一条流程有没有待处理/需优化项——确定性列出该流程的反哺洞察（运维/分析识别的）
+        + 设计待确认数，不重跑 LLM。这些正是流程管理卡片上「待处理」那几条的来源。"""
+        entry = next((c for c in catalog if c["workflow_id"] == workflow_id), None)
+        if entry is None:
+            return {"route": "flow_issues", "reply": "没能定位到你问的是哪条流程，说下流程名称？"}
+        lines: list[str] = []
+        if self._insights is not None:
+            try:
+                for ins in self._insights.open_for(entry["workflow_id"]):
+                    head = getattr(ins, "headline", "") or ""
+                    if head:
+                        lines.append(f"- {head}")
+            except Exception:  # noqa: BLE001 - 洞察取不到就只报设计待确认，不崩
+                pass
+        summary = self._workflow_design.design_summary_for_workflow(entry["workflow_definition_id"])
+        design_n = (summary or {}).get("issue_count", 0) if summary else 0
+        if design_n:
+            lines.append(f"- 设计侧还有 {design_n} 项待确认（配置缺口或澄清未清）")
+        if not lines:
+            return {"route": "flow_issues", "target_workflow_id": workflow_id,
+                    "reply": f"「{entry['name']}」目前没有待处理项，也没有检出需要优化的地方，挺干净的。"}
+        body = "\n".join(lines)
+        return {"route": "flow_issues", "target_workflow_id": workflow_id,
+                "reply": f"「{entry['name']}」有这些待处理 / 可优化项：\n{body}\n\n需要的话，进这条流程的设计页，我可以逐条诊断并给修复方案。"}
 
     def _flow_structure_answer(self, workflow_id: str | None, catalog: list[dict[str, Any]], message: str, history: list[dict[str, str]] | None = None) -> dict[str, Any]:
         entry = next((c for c in catalog if c["workflow_id"] == workflow_id), None)
