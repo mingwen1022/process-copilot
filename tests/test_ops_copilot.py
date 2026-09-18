@@ -554,7 +554,8 @@ def test_system_prompt_routes_core_field_withdraw_to_authorization_at_leadership
     prompt = _system_prompt(can_submit_decision=False)
     assert "领导层级" in prompt
     assert "override_jump" in prompt
-    assert "起草环节的真实" in prompt or "起草环节的真实 node_id" in prompt
+    # 核心字段填错、已到领导层级 → target 填起草环节 node_id（这一支仍要在提示词里说清）
+    assert "起草环节" in prompt and "node_id" in prompt
 
 
 def test_system_prompt_forbids_leaking_raw_user_id_in_reply() -> None:

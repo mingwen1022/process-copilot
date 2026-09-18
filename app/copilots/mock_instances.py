@@ -99,7 +99,7 @@ def build_mock_instances(org_data: dict[str, Any] | None = None) -> list[MockIns
             uploaded_materials=materials or [],
         )
 
-    base = {"开始日期": "2026-07-10", "结束日期": "2026-07-12", "请假事由": "个人事务", "工作交接人": "u_it_line_leader"}
+    base = {"开始日期": "2026-07-10", "结束日期": "2026-07-12", "请假事由": "个人事务", "工作交接人": "孙悦"}
     return [
         # —— 正常的（占多数，体现"卡住只是一小部分"）——
         MockInstance("inst_ok_1", "请假申请 · 年假 2 天", "员工请假申请流程", "flowing", None,

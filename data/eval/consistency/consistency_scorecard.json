@@ -1,0 +1,74 @@
+{
+  "case_count": 4,
+  "total_expected": 1,
+  "detected_expected": 1,
+  "recall": 1.0,
+  "false_positive_count": 0,
+  "clean_case_count": 3,
+  "results": [
+    {
+      "case": "LLM说跳条线分管领导实则填起草（确定性层应中和）",
+      "expected_kinds": [],
+      "detected_kinds": [],
+      "matched": [],
+      "missed": [],
+      "unexpected": [],
+      "violations": []
+    },
+    {
+      "case": "改派给不存在的人却承诺已转授权（确定性层应改写文案）",
+      "expected_kinds": [],
+      "detected_kinds": [],
+      "matched": [],
+      "missed": [],
+      "unexpected": [],
+      "violations": []
+    },
+    {
+      "case": "rationale 直写 node_id（正控，应被检出泄漏）",
+      "expected_kinds": [
+        "identifier_leak"
+      ],
+      "detected_kinds": [
+        "identifier_leak"
+      ],
+      "matched": [
+        "identifier_leak"
+      ],
+      "missed": [],
+      "unexpected": [],
+      "violations": [
+        {
+          "case": "rationale 直写 node_id（正控，应被检出泄漏）",
+          "kind": "identifier_leak",
+          "field": "rationale",
+          "detail": "用户可见文案出现内部词「target_node_id」",
+          "evidence": "目标环节 target_node_id=line_leader"
+        },
+        {
+          "case": "rationale 直写 node_id（正控，应被检出泄漏）",
+          "kind": "identifier_leak",
+          "field": "rationale",
+          "detail": "用户可见文案出现内部词「node_id」",
+          "evidence": "目标环节 target_node_id=line_leader"
+        },
+        {
+          "case": "rationale 直写 node_id（正控，应被检出泄漏）",
+          "kind": "identifier_leak",
+          "field": "rationale",
+          "detail": "用户可见文案出现环节 id「line_leader」，应显示环节名「条线分管领导审批」",
+          "evidence": "get_node_id=line_leader，比部门总经理高一档。"
+        }
+      ]
+    },
+    {
+      "case": "正常修数据（干净基线）",
+      "expected_kinds": [],
+      "detected_kinds": [],
+      "matched": [],
+      "missed": [],
+      "unexpected": [],
+      "violations": []
+    }
+  ]
+}

@@ -1,88 +1,152 @@
-# 流程副驾 · Process Copilot
+# Process Copilot
 
-> 企业流程全生命周期 AI 系统：把散落在文档、邮件、Excel、群聊里的业务流程，抽取成标准化、可上线的定义；再用运行数据反哺设计——**设计 → 运行 → 分析 → 反哺** 连成一个能自我改进的闭环。
+**English** · [简体中文](README.zh-CN.md)
 
-一条工程哲学贯穿全程：**确定性的归确定性、LLM 的归 LLM**——LLM 只负责理解意图 / 组织语言，能判对错的事（校验、算指标、算路径、打分、应用变更）全部交给确定性代码。设计管线里只有"抽取"和"业务校验"两个节点用到 LLM，其余全是确定性代码。
+> An AI system for the full lifecycle of enterprise workflows: it extracts business processes
+> scattered across documents, emails, spreadsheets and group chats into a standardised,
+> deployable definition — then feeds runtime data back into design, closing
+> **design → run → analyse → feed back** into a loop that improves itself.
 
-> **关于本项目**：个人项目，从 0 独立构建，不隶属任何公司。里面的痛点与场景提炼自我做流程数字化与效能看板产品期间遇到的真实问题；仓库内所有案例数据均为合成 / 脱敏样例，不含任何真实机构信息。
+One engineering principle runs through all of it: **deterministic things stay deterministic,
+the LLM only does what only an LLM can do.** The model handles understanding intent and
+phrasing answers; anything with a checkable right answer — validation, metric computation,
+path evaluation, scoring, applying edits — is deterministic code. In the design extraction
+pipeline, only two of six nodes touch an LLM.
+
+> **About this project**: a personal project, built from scratch, not affiliated with any
+> employer. The pain points and scenarios are distilled from real problems I ran into while
+> building workflow-digitalisation and efficiency-dashboard products. Every case in this
+> repository is synthetic or anonymised sample data — no real institutional information.
+
+**Full product write-up, per-agent breakdown and screenshots**:
+<https://mingwen.net/projects/process-copilot.html>
+
+| Design agent: sources → definition | Ops: high-risk actions need sign-off | Analytics: metrics + attribution |
+| --- | --- | --- |
+| ![design](docs/screenshots/design-agent.jpg) | ![authorization](docs/screenshots/ops-authorization.jpg) | ![analytics](docs/screenshots/perf-board.jpg) |
+
+> Evaluation numbers, design trade-offs and current limits live on the detail page above —
+> this README deliberately does not repeat them, **so the two can't drift apart**.
+>
+> Most of the in-repo design documentation under `doc/` is written in Chinese.
 
 ---
 
-## 系统全景
+## System overview
 
 ```
-        ┌──────────── 规则知识库 (RAG) ────────────┐   ← 设计 / 分析 / 副驾 三处都从这检索依据
-        │  制度 · 流程要素规范 · 运维处置规则 · 模板  │
-        └───────────────┬───────────────────────────┘
-                        │ 检索"适用规则"作为设计约束与依据（并用于合规评测）
-   多源材料 ──▶ ① 设计 Agent ──▶ 标准流程定义(JSON) ──▶ ⑤ 翻译层 ──▶ 飞书审批（真实 OA 引擎）
-                        │              │ 评测：要素级 P/R/F1（对 gold）+ 合规命中率（无参照）
-        会话式修改 ⟲────┘              ▼
-                            ② 薄运行时(happy path) ──▶ 结构化运行事件日志
+     ┌─────────── Rules knowledge base (RAG) ───────────┐  ← design / analytics / copilots
+     │  policies · element specs · ops rules · templates │     all retrieve evidence here
+     └──────────────────┬───────────────────────────────┘
+                        │ retrieves "applicable rules" as design constraints and evidence
+                        │ (also used for reference-free compliance scoring)
+  Source material ─▶ ① Design agent ─▶ Process definition (JSON) ─▶ ⑤ Translator ─▶ Lark Approval
+                        │            │                                              (real OA engine)
+                        │            │  Eval: element-level P/R/F1 vs gold
+   conversational ⟲─────┘            │      + compliance hit rate (reference-free)
+       editing                       ▼
+                          ② Thin runtime (happy path) ─▶ structured run event log
                                      │
-                                     ├──────────────▶ ④ 参与者副驾（发起向导 / 运维 / 管理）
+                                     ├──────▶ ④ Participant copilots (launch / ops / management)
                                      ▼
-                            ③ 效能分析 Agent ──▶ 指标 · 堵点 · 诊断报告
+                          ③ Analytics agent ─▶ metrics · bottlenecks · diagnosis report
                                      │
-                                     └────▶ 优化建议反哺 ① 重新设计  ⟲ 闭环
+                                     └──────▶ suggestions feed back into ① redesign  ⟲ loop closed
 ```
 
-## Agent 一览
+## The agents
 
-| Agent | 目标用户 | 做什么 |
-|---|---|---|
-| **流程设计** | 流程 owner | LangGraph 多智能体把多源材料抽成标准定义；会话式修改（typed 工具 + diff + undo + 编辑后校验） |
-| **流程发起向导** | 普通员工（发起人） | 定位该走哪个流程、预演路径 / 材料 / 时长、教填表 |
-| **流程运维** | 发起人 / 审批人 / 管理员 | 卡住确定性诊断；符合制度即处置，超范围升级人工生成运维授权工单 |
-| **流程效能分析** | 流程 owner / 全局管理员 | 确定性算指标 + 阈值判堵点 + LLM 归因 / 建议；问题反哺流程管理 |
-| **流程管理** | 流程 owner / 系统管理员 | 全局页 + 设计入口；反哺待处理项逐条诊断修复；上下架 |
-| 设计评测 | （调 harness 用） | AI 反向生成 raw source + 人工定 gold；字段级 P/R/F1 + LLM judge 判同义 |
-| 制度规则 RAG | 共享层 | 原子规则 + 两阶段混合检索，一处维护、三处复用，带原文出处可追溯 |
+| Agent | For whom | What it does |
+| --- | --- | --- |
+| **Design** | Process owner | A LangGraph multi-agent pipeline turns multi-source material into a standard definition; edit it conversationally (typed tools + diff + undo + post-edit validation) |
+| **Launch guide** | Any employee | Finds the right process, previews the path, required materials and expected duration deterministically from the definition |
+| **Todo & in-flight copilot** | Approvers / initiators | Urgency ranking, per-document compliance check, explains a case's current state; every deterministic action goes through a confirmation gate |
+| **Ops** | Initiators / approvers / admins | Deterministic diagnosis of a stuck case; applies directly when policy allows, otherwise escalates into an authorisation ticket |
+| **Analytics** | Owners / platform admins | Computes metrics deterministically, judges bottlenecks against thresholds, attributes causes with an LLM, feeds findings back to management |
+| **Management** | Owners / system admins | Global view and design entry point; diagnoses and fixes fed-back items one by one; publish / unpublish |
+| Design evaluation | (harness tuning) | AI reverse-generates raw sources, humans lock the gold; field-level P/R/F1 plus an LLM judge for synonym equivalence |
+| Rules RAG | Shared layer | Atomic rules + two-stage hybrid retrieval — maintained once, reused in three places, every hit traceable to its source clause |
 
-**闭环见效**：某流程经"运行诊断 → 反哺 → 重新设计(v2)"后，办结时长从 3.2 天降到 0.9 天（↓70%）。
+**The loop closes**: after one process went through *runtime diagnosis → feed back → redesign (v2)*,
+recomputing over the synthetic event log gives average cycle time 76h → 23h and conformance
+violations 7 → 0.
 
-## 技术栈
+> ⚠️ This is a **what-if process simulation**. The pipeline and the metric computation are real,
+> and the structural improvement (skip-level violations going to zero once a fallback path exists)
+> holds mechanically — but **the magnitude comes from modelling assumptions, not a validated
+> business ROI**: the runtime is a demo mock and the event log is synthetic.
 
-LangGraph · AWS Bedrock (Claude) · 结构化抽取 · 规则 RAG（两阶段混合检索）· 约束 / 校验 · 确定性状态机 · 评测体系 (P/R/F1) · 反哺闭环 · 飞书 OA 对接 · FastAPI · uv
+## Permission boundaries
 
-## 快速开始
+Written in code, not in prompts:
 
-需要 Python ≥ 3.12 与 [uv](https://github.com/astral-sh/uv)。
+- **Read-only** — the SQL escape hatch is parsed with sqlglot: single `SELECT` only, `ATTACH` /
+  `PRAGMA` / DDL / DML explicitly blocked, row cap and statement timeout enforced. The main path
+  doesn't use SQL at all; it uses typed queries that can only filter, aggregate and optionally group.
+- **Writes are typed operations** — 21 typed edit operations, not free-form JSON editing.
+  Each is applied and validated one at a time, with diff and undo.
+- **Initiator confirmation** — fixing your own field values, withdrawing your own case.
+- **Owner authorisation** — jumping to a node, skipping a node, reassigning an approver.
+  These three are a hard-coded set; even once approved, application is still blocked by
+  deterministic validation if the target is illegal.
+- **One external side effect** — publishing a definition to a real Lark (Feishu) tenant.
+  That is the only outbound write in the entire system.
+
+## Stack
+
+LangGraph · AWS Bedrock (Claude) · Pydantic structured output · rules RAG with two-stage hybrid
+retrieval · Chroma + Bedrock embeddings · constraints & validation · deterministic state machine ·
+evaluation harness (P/R/F1) · feedback loop · Lark Approval API · FastAPI · SQLite · uv
+
+## Quick start
+
+Requires Python ≥ 3.12 and [uv](https://github.com/astral-sh/uv).
 
 ```bash
-# 1. 配置 Bedrock 凭证（LangChain ChatBedrockConverse，只需单个 Bedrock API key）
-cp .env.example .env    # 填入 AWS_BEARER_TOKEN_BEDROCK；飞书对接另需 APP_ID / APP_SECRET
+# 1. Configure Bedrock credentials (LangChain ChatBedrockConverse — a single Bedrock API key)
+cp .env.example .env    # set AWS_BEARER_TOKEN_BEDROCK; Lark publishing also needs APP_ID / APP_SECRET
 
-# 2. 跑起交互 demo（流程管理 / 设计 / 分析 / 参与者副驾 全在一个 SPA 里）
+# 2. Run the interactive demo (management / design / analytics / copilots, all in one SPA)
 uv run uvicorn app.api.server:app --host 127.0.0.1 --port 8811
-#   浏览器打开 http://127.0.0.1:8811
+#   then open http://127.0.0.1:8811
 
-# 3. 单跑设计抽取管线（多源材料 → 标准流程定义 JSON）
+# 3. Run the design extraction pipeline on its own (multi-source material → definition JSON)
 uv run python -m app.workflows.process_v1 --case data/cases/leave_request --out runs/leave
 
-# 4. 测试
+# 4. Tests
 uv run pytest -q
 ```
 
-## 目录结构
+## Repository layout
 
 ```
-app/          设计管线 / 薄运行时 / 评测 / 分析 / 副驾 / 规则RAG / 飞书翻译 / API
-data/cases/   合成流程案例（请假 / 报销 / 采购 / 印章 / 子公司重大事项）+ gold 金标准
-data/knowledge/  制度规则（原子规则 + 原文 chunk）
-data/analytics/  合成运行事件与指标数据
-doc/          架构与 harness 文档、产品功能全景、各模块设计文档
-scripts/      数据校验 / 飞书推送等脚本
-tests/        pytest 用例
+app/             design pipeline / thin runtime / evaluation / analytics / copilots /
+                 rules RAG / Lark translation / API
+data/cases/      synthetic process cases (leave / expense / procurement / seal /
+                 subsidiary major matters) + gold standards
+data/knowledge/  policy rules (atomic rules + source-text chunks)
+data/analytics/  synthetic run events and metric data
+doc/             architecture and harness docs, product overview, per-module design notes
+scripts/         data validation, Lark publishing and evaluation runners
+tests/           pytest suites
 ```
 
-架构与实现细节见 [`doc/agent架构与harness.md`](doc/agent架构与harness.md) 与 [`doc/产品功能全景.md`](doc/产品功能全景.md)。
+Architecture and implementation details (in Chinese):
+[`doc/agent架构与harness.md`](doc/agent架构与harness.md) and
+[`doc/产品功能全景.md`](doc/产品功能全景.md).
 
-## 设计取舍
+## Design trade-offs
 
-- **确定性 vs LLM 分工**：评测 = 确定性打分 + 无参照检查；编辑 = typed 工具 + 校验 + LLM 解析意图；分析 = 确定性算指标 + LLM 归因；副驾 = LLM 判断 / 解释、诊断 / 动作构造 / 校验 / 应用全确定性；飞书翻译 = 纯确定性映射。
-- **规则检索用两阶段混合，而非裸向量 RAG**：合规场景"宁全不漏"，先结构化筛选保召回，再语义补长文档，最后带原文出处。
-- **薄运行时**：运行时只作为"产生运行数据的底座"（happy-path），不做平台化功能——深做的是设计侧与分析侧两端 AI。
+- **Splitting deterministic work from the LLM** — evaluation = deterministic scoring plus
+  reference-free checks; editing = typed tools and validation, with the LLM only parsing intent;
+  analytics = deterministic metrics with LLM attribution; copilots = the LLM judges and explains
+  while diagnosis, action construction, validation and application are all deterministic;
+  Lark translation = a pure deterministic mapping.
+- **Two-stage hybrid rule retrieval instead of naive vector RAG** — compliance work would rather
+  over-retrieve than miss, so a structured prefilter guarantees recall, semantic search fills in
+  long documents, and every hit carries its source clause.
+- **A deliberately thin runtime** — the runtime exists to produce run data along the happy path,
+  not to become a workflow platform. The depth goes into the two AI ends: design and analytics.
 
 ---
 

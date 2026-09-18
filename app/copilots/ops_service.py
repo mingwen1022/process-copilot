@@ -373,9 +373,15 @@ class OpsCopilotService:
         actions = build_actions_from_decision(
             decision, inst.context, can_submit_decision=inst.can_submit_decision, org_data=self._org,
         )
-        if not actions:  # 决策类别需要动作但没给全参数 → 降级为升级人工
+        if not actions:  # 决策类别需要动作但没给全参数 → 降级为升级人工（别沿用 LLM 那句可能承诺了授权的 reply）
             self._pending.pop(instance_id, None)
-            return _terminal(instance_id, decision.reply, "escalate", rationale="无法构造合法动作，转人工。")
+            return _terminal(
+                instance_id,
+                # 别把发起人指向运维授权台——那是流程负责人的台子，他去了也点不了（同"去授权台"按钮那次的教训）。
+                "这个诉求我没能落成一个可执行的动作——改派得指定组织里真实存在的人员、跳转得给到诊断里真实存在的环节。"
+                "已按升级人工处理。你也可以补充一个明确的目标人或目标环节，我再重新判断一次。",
+                "escalate", rationale="参数不合法，无法构造动作，转人工。",
+            )
 
         summary = _actions_summary(actions, process=inst.context.process, org_data=self._org)
         if route == "user_confirm":
@@ -394,7 +400,13 @@ class OpsCopilotService:
             requested_by=user_name(self._org, inst.context.initiator_user_id),
         )
         self._auth_actions[req_id] = actions
-        return OpsProposal(instance_id=instance_id, reply=decision.reply, category=decision.category,
+        # reply 用确定性文案，锁定成"实际要执行的那个动作"（summary），不沿用 LLM 可能与动作不一致的自由措辞——
+        # 之前出现过 reply 说跳 A、工单里动作却是 B。rationale 仍保留 LLM 的依据说明。
+        auth_reply = (
+            f"已按你的诉求生成一张运维授权工单：{summary}。这属于会改变流程走向的高风险破例处置，"
+            f"不能自助执行，已转交流程负责人在「运维授权台」审批；批准后系统自动执行、单据继续下送。"
+        )
+        return OpsProposal(instance_id=instance_id, reply=auth_reply, category=decision.category,
                            rationale=decision.rationale, route="authorization", needs_confirmation=False,
                            authorization_id=req_id, authorization_summary=summary)
 

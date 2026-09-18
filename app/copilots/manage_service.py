@@ -28,7 +28,8 @@ from app.models.text import is_legacy_text_generator
 
 class ManageRoute(BaseModel):
     route: Literal["catalog", "batch_fix", "flow_issues", "flow_structure", "analytics", "launch_guide", "general"] = Field(
-        description="问题类型：catalog=问流程目录本身（有几条流程、都叫什么、哪些已上架/有待处理项——"
+        description="问题类型：catalog=问流程目录本身（有几条流程、都叫什么、哪些已上架/有待处理项，"
+        "以及跨流程的比较排序——如「哪条流程待处理项最多」「该优先优化哪条」——"
         "不是问某条流程的设计细节或效能，是问「清单」层面的事）；"
         "flow_issues=问**某一条具体流程**有没有待处理项 / 需不需要优化 / 有什么问题（针对单条，"
         "不是问全部、也不是问它整体怎么设计的、也不是纯问效能指标），要选出 target_workflow_id；"
@@ -63,7 +64,8 @@ def _classify_system_prompt() -> str:
 判断关键：问「这条流程整体结构/分支逻辑」→ flow_structure；问「这条流程有没有待处理项/
 要不要优化/有什么问题」→ flow_issues（针对单条流程列它的待处理项）；问「给了具体取值、我会
 怎么流转/符不符合」→ launch_guide（它能按取值确定性预演路径）。注意区分：问「哪些流程有待
-处理项」（清单层面）是 catalog；问「员工请假申请流程有没有需要处理的」（指名某一条）是 flow_issues。
+处理项」「哪条流程待处理项最多/该先优化哪条」（清单层面、跨流程比较排序）是 catalog；
+问「员工请假申请流程有没有需要处理的」（指名某一条）是 flow_issues。
 
 给你一份流程目录（workflow_id/名称/是否有待处理项/是否支持效能问答）。若问题针对某条具体流程，
 从目录里选出它的 workflow_id 填 target_workflow_id（必须是目录里存在的 id）；问题是跨流程/全局的
@@ -89,7 +91,7 @@ def _classify_user_prompt(catalog: list[dict[str, Any]], message: str, history: 
     for c in catalog:
         tags = []
         if c.get("has_issues"):
-            tags.append("有待处理项")
+            tags.append(f"待处理 {c.get('pending_count', 0)} 项")
         if c.get("has_analytics"):
             tags.append("支持效能问答")
         lines.append(f"  - {c['workflow_id']} | {c['name']}" + (f"（{'、'.join(tags)}）" if tags else ""))
@@ -218,13 +220,22 @@ class ManageCopilotService:
             summary = self._workflow_design.design_summary_for_workflow(d["workflow_definition_id"])
             if summary:
                 issue_count = summary.get("issue_count", issue_count)
+            # 待处理数 = 设计待确认 + 未处理的反哺洞察——跟流程管理卡片「待处理·N」同口径。
+            # 只算设计侧的话，像请假流程这种设计干净但积了一堆运维/分析反哺的，会被误报成"没有待处理项"。
+            pending_count = issue_count
+            if self._insights is not None:
+                try:
+                    pending_count += sum(1 for _ in self._insights.open_for(d["workflow_id"]))
+                except Exception:  # noqa: BLE001 - 洞察取不到就只按设计侧计数，不崩
+                    pass
             catalog.append(
                 {
                     "workflow_id": d["workflow_id"],
                     "workflow_definition_id": d["workflow_definition_id"],
                     "name": d["name"],
                     "status": d.get("status"),
-                    "has_issues": bool(issue_count),
+                    "has_issues": bool(pending_count),
+                    "pending_count": pending_count,
                     "has_analytics": d["workflow_id"] in self._analytics_by_workflow_id,
                 }
             )
@@ -276,20 +287,30 @@ class ManageCopilotService:
         return ""
 
     def _catalog_answer(self, catalog: list[dict[str, Any]]) -> dict[str, Any]:
-        # 目录本身是已经算好的确定性数据（有几条、叫什么、状态），直接格式化，不用再叫一次 LLM 猜。
+        # 目录本身是已经算好的确定性数据（有几条、叫什么、状态、各有几项待处理），直接格式化，
+        # 不用再叫一次 LLM 猜。带上每条的待处理数并按多→少排——"哪条待处理最多/该先优化哪条"
+        # 这类比较问题也路由到这里，光给清单不给数量是答不上的。
         if not catalog:
             return {"route": "catalog", "reply": "当前没有任何流程。"}
         published = [c for c in catalog if c.get("status") == "PUBLISHED"]
         draft = [c for c in catalog if c.get("status") != "PUBLISHED"]
-        lines = [f"共 {len(catalog)} 条流程（已上架 {len(published)} 条，草稿 {len(draft)} 条）："]
-        for c in catalog:
+        ranked = sorted(catalog, key=lambda c: c.get("pending_count", 0), reverse=True)
+        lines = [f"共 {len(catalog)} 条流程（已上架 {len(published)} 条，草稿 {len(draft)} 条），按待处理项多少排："]
+        for c in ranked:
             tags = []
             tags.append("已上架" if c.get("status") == "PUBLISHED" else "草稿")
-            if c.get("has_issues"):
-                tags.append("有待处理项")
+            n = c.get("pending_count", 0)
+            if n:
+                tags.append(f"待处理 {n} 项")
             if c.get("has_analytics"):
                 tags.append("支持效能问答")
             lines.append(f"- {c['name']}（{c['workflow_id']}） · {'、'.join(tags)}")
+        top = ranked[0]
+        if top.get("pending_count", 0) > 0:
+            lines.append(
+                f"\n待处理项最多的是「{top['name']}」（{top['pending_count']} 项），建议先优化它——"
+                f"问我「{top['name']}有哪些待处理项」可以看明细，或直接进它的设计页逐条诊断修复。"
+            )
         return {"route": "catalog", "reply": "\n".join(lines)}
 
     def _flow_issues_answer(self, workflow_id: str | None, catalog: list[dict[str, Any]]) -> dict[str, Any]:

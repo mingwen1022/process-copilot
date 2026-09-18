@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>副驾壳 · UI 方向原型</title>
+<title>流程 Copilot</title>
 <style>
   :root{
     --bg:#f6f7f9; --surface:#fff; --surface-2:#f2f3f5; --line:#eceef1;
@@ -126,6 +126,18 @@
   .metric label{font-size:12px;color:var(--ink-3)}
   .metric .big{font-size:25px;font-weight:700;margin:3px 0 2px}
   .metric .hint{font-size:11px;color:var(--ink-3)}
+  /* 指标口径提示：小问号，悬停出说明。指标怎么算的应该就地讲清楚，不该逼人去翻文档。 */
+  .mhelp{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;
+         background:#ece7fb;color:var(--ai);font-size:10px;font-weight:700;margin-left:5px;cursor:help;
+         position:relative;vertical-align:middle;user-select:none}
+  .mhelp:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);
+         width:250px;background:#2a2140;color:#fff;font-size:11px;font-weight:400;line-height:1.65;padding:10px 12px;
+         border-radius:10px;white-space:normal;text-align:left;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+  .mhelp:hover::before{content:'';position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);
+         border:5px solid transparent;border-top-color:#2a2140;z-index:60}
+  /* 首尾两张卡改成靠边对齐，否则 250px 的提示框会被内容区边缘裁掉 */
+  .metrics .metric:first-child .mhelp:hover::after{left:0;transform:none}
+  .metrics .metric:last-child .mhelp:hover::after{left:auto;right:0;transform:none}
   .an-origin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
   @media(max-width:1100px){.an-origin-grid{grid-template-columns:1fr}}
   .an-origin-grid h4{font-size:12.5px;margin:0 0 10px;color:var(--ink-2)}
@@ -352,7 +364,7 @@
     <a class="nav active" onclick="go('todo')" id="nav-todo"><span class="ic">◈</span>我的流程<span class="badge">2</span></a>
     <a class="nav" onclick="go('launch')" id="nav-launch"><span class="ic">＋</span>发起申请</a>
     <div class="navgroup-t">运维侧</div>
-    <a class="nav" onclick="go('auth')" id="nav-auth"><span class="ic">✓</span>运维授权台<span class="badge">1</span></a>
+    <a class="nav" onclick="go('auth')" id="nav-auth"><span class="ic">✓</span>运维授权台<span class="badge">0</span></a>
     <div class="navgroup-t">分析侧</div>
     <a class="nav" onclick="go('analytics')" id="nav-analytics"><span class="ic">◔</span>流程效能分析</a>
     <div class="spacer"></div>
@@ -713,6 +725,9 @@
           </div>
           <div data-panel="board">
             <div class="sub" style="margin-bottom:14px">结构化指标 · 纯确定性计算，不含 AI 归因；成因分析与优化建议见「诊断报告」</div>
+            <div class="sub" style="margin:0 0 8px;font-weight:600;color:var(--ink-2)">价值层</div>
+            <div class="metrics" id="an-value-metrics"></div>
+            <div class="sub" style="margin:0 0 8px;font-weight:600;color:var(--ink-2)">运行统计</div>
             <div class="metrics" id="an-metrics"></div>
             <div id="an-sections"></div>
           </div>
@@ -856,7 +871,12 @@
 <script>
   const PAGES = ['todo','my','designinit','designws','manage','knowledge','eval','feishu','launch','launchform','auth','analytics','tokens'];
   // 每页的副驾"大脑"（多页共用设计/待办大脑）
-  const BRAIN_OF = {todo:'todo', my:'my', designinit:'design', designws:'design',
+  // designinit（新建流程）挂 manage 而不是 design：设计大脑是**绑定到某条具体草稿**的（state.dwDefId），
+  // 而新建流程页还没有草稿，挂 design 会沿用上次打开的那条——真实复现过：在新建页问"目前是哪个流程"，
+  // 答的是上一条评测草稿；更糟的是编辑指令会落到那条无关草稿上（非结构性改动直接生效，没有确认闸）。
+  // 这页的归属本来就是流程管理（面包屑、NAV_OF、左侧高亮都是 manage），且 manage 在这正好有用：
+  // 新建前查重（有哪些流程了 / 会不会和已有的重复 / 某条是怎么设计的）。
+  const BRAIN_OF = {todo:'todo', my:'my', designinit:'manage', designws:'design',
                     manage:'manage', feishu:'design', launch:'launch', launchform:'launch', knowledge:'knowledge',
                     eval:'design', auth:'auth', analytics:'analytics', tokens:'design'};
   // 子页归属的导航高亮：详情/初始化/工作台都属于各自的 hub
@@ -876,7 +896,7 @@
     feishu:['流程管理 / 设计工作台 / 发布到飞书','发布到飞书 · 翻译适配','draft','飞书'],
     launch:['发起申请','发起申请','draft','新建'],
     launchform:['发起申请 / 填写','发起单据','draft','草稿'],
-    auth:['运维授权台','运维授权台','stuck','1 待授权'],
+    auth:['运维授权台','运维授权台','stuck','待授权'],
     analytics:['流程效能分析','流程效能分析','draft','看板'],
     eval:['设计评测','设计评测 · extraction eval','draft','gold 对比'],
     tokens:['设计规范','设计规范','draft','参考'],
@@ -911,8 +931,13 @@
     else { if (bubble) bubble.style.display = ''; if (note) note.style.display = ''; }
     if (typeof ensurePage === 'function') ensurePage(p);
   }
-  // 不挂对话副驾的页面（纯数据/调试视图）
-  const NO_COPILOT = new Set(['eval']);
+  // 不挂对话副驾的页面：
+  // - eval：纯数据/调试视图（抽取打分可视化），没有对口的对话能力；
+  // - auth：运维授权台**背后没有对话 agent**（auth 不在 CHAT_HANDLER 里，面板上那句"我是授权协助…"
+  //   是写死的静态文案、不是任何后端生成的），而且它跟页面顶部那段说明完全重复。授权本身只有
+  //   批准/驳回两个确定性动作，用上方按钮完成即可——留一个零后端的空壳面板占地方反而误导。
+  //   （brain-auth 那个 div 先留着，将来若给授权台接真 agent，从这个集合里去掉即可恢复。）
+  const NO_COPILOT = new Set(['eval', 'auth']);
 
   // 切换副驾"大脑"：面板标题/气泡文案/高亮哪个 brain 容器，供 go() 和数据到位后的纠正调用
   function setBrain(brainId){
@@ -930,10 +955,10 @@
     if (inp) {
       const chattable = !!CHAT_HANDLER[brainId];
       inp.disabled = !chattable;
-      inp.placeholder = chattable ? '继续问副驾…' : (BRAIN_DISABLED_HINT[brainId] || '该助手用上方按钮操作，暂不支持自由提问');
+      // 目前只有 auth（授权协助）没有对话处理器，走按钮操作
+      inp.placeholder = chattable ? '继续问副驾…' : '该助手用上方按钮操作，暂不支持自由提问';
     }
   }
-  const BRAIN_DISABLED_HINT = { manage: '跨流程批量处理能力开发中——点进具体流程，用那条流程的设计专家修改' };
 
   // ——————————— 副驾面板 · 活对话（横切） ———————————
   const _brainActivated = {};   // 首次真实发送清掉静态示例
@@ -1062,13 +1087,19 @@
     if (thinking) thinking.remove();
     appendAiMsg(brainId, html);
   }
-  // 切回起始态：分析侧的对话历史/看板缓存都要跟着清空——不然聊天记录里还留着切回前
-  // 提到的洞察/反哺内容（甚至可能引用已经被回滚掉的数据），且 state.analyticsHistory
-  // 会把这些过时上下文继续带给后端，误导下一轮回答。
-  function _resetAnalyticsBrain(){
-    state.analyticsHistory = [];
-    const host = brainLog('analytics');
-    if (host) host.innerHTML = `<div class="msg"><div class="av">✦</div><div class="txt">我是<b>分析专家</b>。问我流程的运行指标——哪个环节最慢、退回率多少、为什么变慢，答案都锚在真实事件流上。</div></div>`;
+  // 切回起始态：**所有**副驾的对话历史/记录都要跟着清空——不然聊天里还留着切回前的内容
+  // （授权工单、洞察、诊断……甚至引用已被回滚掉的数据），且 state.*History 会把这些过时
+  // 上下文继续带给后端，误导下一轮回答。做法：启动时快照各 brain 容器的开场白 HTML，
+  // 切回时整体还原并清空历史（曾漏掉在办副驾，切回后那边的旧对话原样留着）。
+  const _brainInitialHTML = {};
+  document.querySelectorAll('#brain-log .brain').forEach(el => { _brainInitialHTML[el.id] = el.innerHTML; });
+  function _resetCopilotChats(){
+    state.myHistory = []; state.todoHistory = []; state.manageHistory = [];
+    state.analyticsHistory = []; state.evalHistory = {};
+    for (const [id, html] of Object.entries(_brainInitialHTML)) {
+      const el = document.getElementById(id); if (el) el.innerHTML = html;
+      delete _brainActivated[id.replace(/^brain-/, '')];  // 回到"未激活"，下次真实发送再清开场白
+    }
   }
 
   // agent 自主调用 run_sql 工具的结果卡片：成功时展示 SQL 原文（折叠）+ 结果表；
@@ -1094,7 +1125,13 @@
     let html = `<div class="aicard"><div class="top">${hits.length ? `检索到 <b>${hits.length}</b> 条相关规则/条款：` : (r.unavailable ? '检索服务暂不可用。' : '没有检索到相关规则。')}</div>`;
     hits.slice(0,5).forEach(h => {
       const tag = h.kind === 'rule' ? '原子规则' : '原文';
-      html += _cite(tag, h.kind === 'rule' ? 'rule' : '', `${esc(h.title || h.source || '')}${h.snippet ? ' · ' + esc(h.snippet.slice(0,60)) : ''}`);
+      // 正文取 h.text（后端 _describe 给的就是这个字段）。以前这里读的是 h.snippet——
+      // 后端从来没有这个字段，所以永远 undefined，只剩一个光标题。排版对齐页面自身的
+      // 规则列表：标题加粗 → rule_id / 文档·条款 → 完整正文（规则约 30 字、chunk 最长 ~240 字，不截断）。
+      html += _cite(tag, h.kind === 'rule' ? 'rule' : '',
+        `<b style="font-size:13px">${esc(h.title || h.source || '')}</b>`
+        + (h.source ? `<div class="rid" style="margin-top:3px">${esc(h.source)}</div>` : '')
+        + (h.text ? `<div style="margin-top:5px;line-height:1.65">${esc(h.text)}</div>` : ''));
     });
     html += `</div>`;
     if (thinking) thinking.remove();
@@ -1128,6 +1165,7 @@
       // 待授权工单列表，不认这个人的身份）。改成纯提示：已转交，等结果，不给一个点了没用的按钮。
       html += _cite('授权工单','insight', esc(r.authorization_summary || '已生成授权工单，转流程负责人签字') + '——高风险动作我不能自己拍板');
       html += `<div class="sub" style="margin-top:7px">已发起运维申请，由流程负责人审批授权后自动执行，无需你再操作，请等待结果通知。</div>`;
+      refreshAuthBadge();  // 侧边栏"运维授权台"角标立刻 +1，别等切过去才更新
     }
     html += `</div>`;
     if (thinking) thinking.remove();
@@ -1814,8 +1852,16 @@
   const _loaded = {};
   async function ensurePage(p) {
     // 'my'/'launchform' 每次进入都按当前实例/流程刷新（不缓存）
-    if (p === 'my') { if (state.myInstanceId) { try { await loadMy(); await renderMy(); } catch (e) {} } return; }
+    // 已经聊过就 keepChat=true——renderMyBrainFacts 会 innerHTML 清空 #brain-my（facts 卡片和聊天记录共用一个容器），
+    // 不 keep 的话从运维授权台切回这张单子，之前的对话就被 facts 卡片覆盖没了。首次打开(openMy 清空 myHistory)才重绘 facts。
+    if (p === 'my') { if (state.myInstanceId) { try { await loadMy(); await renderMy(!!(state.myHistory && state.myHistory.length)); } catch (e) {} } return; }
     if (p === 'launchform') { try { await loadLaunchForm(); renderLaunchForm(); } catch (e) {} return; }
+    // 'designinit'（新建流程）：把上一条草稿的设计会话残留清干净。这页还没有草稿，留着
+    // dwDefId/dwSession 会让后续动作误挂到上次打开的那条流程上（见 BRAIN_OF 处的说明）。
+    // 真正的新 dwDefId 由 startDesignInit() 初始化完成后写入。
+    if (p === 'designinit') { state.dwDefId = null; state.dwSession = null; state.dwSessionDefId = null; state._designBrainLoadedFor = null; return; }
+    // 'auth' 每次进入都重拉——在办副驾里现场生成的授权工单是外部变化，缓存住会导致"聊天里说已生成、切到授权台却看不到"
+    if (p === 'auth') { try { await loadAuth(); renderAuth(); } catch (e) {} return; }
     // 'feishu' 每次进入都按当前设计的流程重新翻译预览（不缓存）
     if (p === 'feishu') { try { await loadFeishu(); renderFeishu(); } catch (e) {} return; }
     // 'designws' 每次进入都重拉——上架/下架、别的地方改了草稿这些外部变化不会自己推到这
@@ -1836,7 +1882,6 @@
       if (p === 'manage') { await loadManage(); renderManage(); }
       else if (p === 'launch') { await loadLaunch(); renderLaunch(); }
       else if (p === 'knowledge') { await loadKnowledge(); renderKnowledge(); }
-      else if (p === 'auth') { await loadAuth(); renderAuth(); }
       else if (p === 'analytics') { await loadAnalytics(); renderAnalytics(); }
       else if (p === 'eval') { await loadEval(); renderEvalOverview(); }
     } catch (e) { _loaded[p] = false; }
@@ -2073,7 +2118,9 @@
   }
 
   // ——————————— 我的流程 · 单据详情 ———————————
-  function openMy(instanceId) { state.myInstanceId = instanceId; state.myHistory = []; go("my"); }
+  // 换一张单据才清空对话；从列表重新点开"刚看的同一张"时保留对话（配合 ensurePage 的 keepChat，
+  // 让"聊完→去运维授权台→列表点回这张单"也不丢记录）
+  function openMy(instanceId) { if (state.myInstanceId !== instanceId) state.myHistory = []; state.myInstanceId = instanceId; go("my"); }
   async function loadMy() {
     const id = state.myInstanceId;
     // 切回起始态会把 state.todo 清空强制刷新，但若停在某单详情页会直接 go('my') 而不
@@ -2216,7 +2263,13 @@
   function renderMyBrainFacts(it, canDecide) {
     const host = brainLog("my");
     if (!host) return;
-    if (!it) { host.innerHTML = ""; return; }
+    // 身份帧：体检卡片之前先给一句"我是谁、我会先干什么"。这条开场白本来就写在静态 HTML 里，
+    // 但以前 host.innerHTML= 会把它整个覆盖掉，等于写了从不显示——用户一进来先看到的是
+    // 三条红黄风险标签和一个「批准」按钮，不知道这些判断哪来的、该不该信。
+    // 体检本身保持**主动**：它是纯确定性的（content_risk + task_inspection，零 LLM），
+    // 不花 token、不会编、不用等，没有理由让审批人每次先打一句"帮我看下风险"。
+    const intro = _brainInitialHTML["brain-my"] || "";
+    if (!it) { host.innerHTML = intro; return; }
     const as = state.assist, insp = state.myInspect, detail = state.myDetail;
     const risks = ((as && as.content_risk) || []).map(r =>
       `<div class="cite"><span class="tag" style="background:var(--warn)">内容风险</span><div>${esc(r.message || "")}${r.clause ? "（" + esc(r.clause) + "）" : ""}</div></div>`
@@ -2248,7 +2301,7 @@
           <button class="ghost" onclick="quickOpsDecision('more')">要求补充</button>
         </div>`
       : (diag && diag.stuck ? `<div style="padding:8px 13px;font-size:11px;color:var(--ink-3)">该单卡住——在下方描述情况，我来诊断根因、给处置方案（高风险动作会转授权）。</div>` : "");
-    host.innerHTML = `<div class="msg"><div class="av">✦</div><div class="txt" style="padding:0;background:none">
+    host.innerHTML = intro + `<div class="msg"><div class="av">✦</div><div class="txt" style="padding:0;background:none">
       <div class="aicard">
         <div class="top">${esc(it.title)}：我核了一遍——</div>
         ${risks}${materialFindings}${complianceFindings}${diagBlock}${cleanNote}
@@ -2385,8 +2438,9 @@
       state.manage = null; state.dwSession = null; state.dwSessionDefId = null;
       state.todo = null; state._designBrainLoadedFor = null;
       state.diag = null; state.metrics = null; state.vercmp = null;
-      _resetAnalyticsBrain();
+      _resetCopilotChats();
       await refreshDemoStatus();
+      refreshAuthBadge();  // 授权工单被清空，侧栏角标同步归零
       go(page || "todo");
     } catch (e) {
       showToast("切回起始态失败：" + (e.message || e));
@@ -2564,11 +2618,19 @@
 
   // ——————————— 运维授权台（审批人视角）———————————
   async function loadAuth() { try { state.auth = (await request("/copilot/authorizations")).items || []; } catch (e) { state.auth = []; } }
+  // 拉最新待授权数，只更新侧栏角标（不重绘整页）——供在办副驾现场生成工单后即时刷新
+  async function refreshAuthBadge() {
+    await loadAuth();
+    const n = (state.auth || []).filter(a => a.status === "pending").length;
+    const b = document.querySelector("#nav-auth .badge"); if (b) b.textContent = n;
+  }
   function renderAuth() {
     const items = (state.auth || []).filter(a => a.status === "pending");
     const host = document.getElementById("auth-list");
     document.getElementById("auth-count").textContent = "· " + items.length;
     const navBadge = document.querySelector("#nav-auth .badge"); if (navBadge) navBadge.textContent = items.length;
+    // 头部 pill 之前是写死的"1 待授权"，跟实际张数对不上——按真实待授权张数刷新
+    const pill = document.getElementById("ppill"); if (pill && page === "auth") pill.textContent = items.length + " 待授权";
     if (!items.length) { host.innerHTML = `<div class="sub" style="padding:8px 2px">暂无待授权工单——运维副驾判定需 override 时，会在此生成授权关口。</div>`; return; }
     host.innerHTML = items.map(a => `<div class="aicard" id="auth-card-${esc(a.request_id)}">
       <div class="top"><b>${esc(a.instance_title || a.instance_id || "")}</b>（发起人 ${esc(a.requested_by || "")}）请求：<b>${esc(a.action_summary || "")}</b></div>
@@ -2704,16 +2766,40 @@
     const nodeName = id => (m.node_names && m.node_names[id]) || NODE_LABEL[id] || id;
     const stuck = (ov.case_status_counts || {})["终止"] || 0;
     const inProgress = (ov.case_status_counts || {})["进行中"] || 0;
-    const metric = (label, big, unit, hint, color) => `<div class="metric"><label>${label}</label><div class="big"${color ? ` style="color:${color}"` : ""}>${big}${unit ? `<span style="font-size:14px">${unit}</span>` : ""}</div><div class="hint">${esc(hint)}</div></div>`;
-    // —— 效能总览（5 张卡）——
+    const metric = (label, big, unit, hint, color, tip) => `<div class="metric"><label>${label}${tip ? `<span class="mhelp" data-tip="${esc(tip)}">?</span>` : ""}</label><div class="big"${color ? ` style="color:${color}"` : ""}>${big}${unit ? `<span style="font-size:14px">${unit}</span>` : ""}</div><div class="hint">${esc(hint)}</div></div>`;
+    // —— 价值层（4 张卡）：证明这套系统有没有省力，区别于下面那层「描述现状」的运行统计。
+    // 含假设的两张，hint 里直接写明"估算/示意"，不藏水分（同评测里如实标不可检项的做法）。
+    const vm = m.value_metrics || {};
+    const eb = vm.manual_effort_breakdown || {};
+    const ssb = vm.self_service_basis || {};
+    const iab = vm.insight_adoption_basis || {};
+    const valueEl = document.getElementById("an-value-metrics");
+    if (valueEl) {
+      valueEl.className = "metrics";
+      valueEl.innerHTML =
+        metric("全生命周期人工投入", (vm.manual_effort_hours ?? 0).toFixed(0), "小时",
+               `设计 ${eb.设计 ?? 0} · 运行 ${eb.运行 ?? 0} · 运维 ${eb.运维 ?? 0} 小时 · 按动作计次估算`, "var(--ai)",
+               "这条流程从设计、上架到跑顺，所有人在它身上花掉的人工小时总和。算法：人工动作计次 × 标准工时（审批 5 分钟／运维处置 20 分钟／设计修改 10 分钟／初始化 1.5 小时）。不用停留时长，因为那里面含排队等待，不等于人真的在办。") +
+        metric("负责人自助上线", vm.self_service_published ?? 0, "条",
+               `初始化 ${ssb.初始化 ?? 0} 条 · 确认调整 ${ssb.确认调整 ?? 0} 次`, null,
+               "流程负责人不找系统管理员或产品经理，自己用副驾把流程建起来、改好、上架的条数。「有没有对外求助」不好直接统计，改用三个真实记录侧面反映：上架条数是完成信号，初始化条数与确认调整次数反映工具被真实使用的程度。主数字用上架数而不是调整次数——调整多不一定是好事，上架才代表真的自己做完了。") +
+        metric("优化建议采纳率", vm.insight_adoption_ratio == null ? "—" : anPct(vm.insight_adoption_ratio), "",
+               iab.全部 ? `${iab.已采纳}/${iab.全部} 条洞察已采纳${vm.insight_adoption_estimated ? " · 示意" : ""}` : "暂无反哺洞察", null,
+               "运行侧反哺给设计侧的优化建议中，被负责人真正采纳的占比。洞察有新发现／已查看／已消解三态，采纳率＝后两态条数 ÷ 全部条数。在设计页确认修复一条，这个数会当场往上走。") +
+        metric("人工介入率", anPct(ov.manual_intervention_case_ratio), "",
+               `${ov.manual_intervention_case_count || 0} 单命中`,
+               (ov.manual_intervention_case_ratio || 0) > 0 ? "var(--warn)" : null,
+               "办结过程中出现过人工订正或破例处置的单量占比。分母＝全部案例，分子＝其中有过人工介入的案例数。全部来自真实运行事件，无估算。");
+    }
+
+    // —— 运行统计（4 张卡）——
     const metricsEl = document.getElementById("an-metrics");
-    metricsEl.className = "metrics cols5";
+    metricsEl.className = "metrics";
     metricsEl.innerHTML =
       metric("案例总数", ov.case_count || 0, "", `含进行中 ${inProgress} · 终止 ${stuck}`) +
       metric("正常结束率", anPct(ov.completion_rate), "", "案例状态分布") +
       metric("平均办结时长", ((ov.avg_case_duration_hours || 0) / 24).toFixed(1), "天", "仅正常结束案例") +
-      metric("平均流转环节", (ov.avg_node_visits || 0).toFixed(1), "", "端到端经过的环节数") +
-      metric("人工介入率", anPct(ov.manual_intervention_case_ratio), "", `${ov.manual_intervention_case_count || 0} 单命中`, (ov.manual_intervention_case_ratio || 0) > 0 ? "var(--warn)" : null);
+      metric("平均流转环节", (ov.avg_node_visits || 0).toFixed(1), "", "端到端经过的环节数");
 
     const sec = [];
     // —— 环节效能排名（按平均停留降序）——
@@ -3635,10 +3721,7 @@
     await loadTodo(); renderTodo();
     // 侧栏「运维授权台」角标：boot 时就该是真实待授权数，不能只在用户点进那页才刷新——
     // 否则角标会一直停在 HTML 里写死的占位值，跟页面里的真实条数对不上。
-    loadAuth().then(() => {
-      const navBadge = document.querySelector("#nav-auth .badge");
-      if (navBadge) navBadge.textContent = (state.auth || []).filter(a => a.status === "pending").length;
-    });
+    refreshAuthBadge();
     go("todo"); openPanel();
     refreshDemoStatus();  // 演示起始态控件：显示"已设定/未设定"
   }

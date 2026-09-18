@@ -47,7 +47,44 @@ def _seed_ops_demo(ops_copilot: OpsCopilotService) -> None:
     """运维副驾的出厂演示数据：启动时播一次，演示"切回起始态"时重播同一套。"""
     ops_copilot.seed_reback_history()  # inst_gap：近30天4单卡覆盖漏洞 → coverage_gap（设计渠道）
     ops_copilot.seed_reback_history("inst_org", times=3)  # inst_org：近30天3单选不到审批人 → org_gap（组织渠道）
-    ops_copilot.seed_authorization()  # 预置一张待授权工单，授权台一进来就有内容
+    # 运维授权台起始态留空：授权工单由用户在在办副驾里对话现场生成，避免出现"本来就有一张、跟新生成的重复"的困惑
+
+
+# 请假流程"已经修掉的历史问题"：让起始态的优化建议采纳率有真实分母，而不是一进来就 0%
+# （0% 会让人误以为闭环从没跑通过）。这几条一律直接置为**已消解**，所以：
+#   · 不会进「流程管理」待处理列表、不影响角标（open_for 只返回未消解的）；
+#   · 同类问题将来复发时会新建一条，不会被这几条挡住（_active 排除已消解）。
+# 讲的故事是：近 30 天共发现 5 个问题，已修 3 个、还剩 2 个待处理 → 采纳率 60%。
+_RESOLVED_HISTORY = [
+    ("dept_supervisor", "high_return", "medium",
+     "「部门主管审批」退回率一度达 31%，多为请假事由填写过简；已在起草环节补填写指引后回落。",
+     {"退回率": 0.31, "样本": 128}),
+    ("line_leader", "slow_node", "high",
+     "「条线分管领导审批」平均停留曾超 6 天；已加超时提醒与代理审批人后缩短。",
+     {"平均停留小时": 148.6, "样本": 96}),
+    (None, "recurring_data_fix", "medium",
+     "起草环节反复错填请假天数（与起止日期对不上）；已在表单加确定性校验后消失。",
+     {"命中单数": 17}),
+]
+
+
+def _seed_resolved_insight_history(insight_store: Any) -> None:
+    """种入请假流程已消解的历史洞察（出厂演示数据，与 _seed_ops_demo 同批播放）。"""
+    from data.schema.insight_schema import InsightKind, InsightSource
+
+    for idx, (node_id, kind, severity, headline, evidence) in enumerate(_RESOLVED_HISTORY):
+        insight = insight_store.record(
+            workflow_definition_id="LEAVE-001",
+            node_id=node_id,
+            kind=InsightKind(kind),
+            severity=severity,
+            source=InsightSource.ANALYTICS,
+            evidence=evidence,
+            window="近30天",
+            headline=headline,
+            at=f"2026-06-{5 + idx:02d}T09:00:00",
+        )
+        insight_store.resolve(insight.insight_id)
 
 
 def create_app(
@@ -72,7 +109,18 @@ def create_app(
     workflow_design = workflow_design_service or WorkflowDesignService(
         runtime.store.db_path, insight_store=insight_store
     )
-    analytics = analytics_service or AnalyticsService(insight_store=insight_store)
+    # 价值层「负责人自助上线」的数据源：设计侧活动计数 + 已上架条数。
+    # 都是已有的真实记录（会话事件 + 定义状态），不是估算；由这里注入，避免分析服务反向依赖设计服务。
+    def _design_activity() -> dict[str, int]:
+        counts = workflow_design.design_activity_counts()
+        counts["published"] = sum(
+            1 for d in slice1.workflow_definitions() if d.get("status") == "PUBLISHED"
+        )
+        return counts
+
+    analytics = analytics_service or AnalyticsService(
+        insight_store=insight_store, design_activity=_design_activity
+    )
     # P3 报销全套：第二个流程的分析实例，指向自己的合成数据目录，与请假的 AnalyticsService 互不干扰
     expense_analytics = AnalyticsService(PROJECT_ROOT / "data/analytics/expense_reimbursement", insight_store=insight_store)
     knowledge = knowledge_service or KnowledgeService()
@@ -84,7 +132,8 @@ def create_app(
             return ProcessDefinition.model_validate(json.loads(row["definition_json"]))
 
         ops_copilot = OpsCopilotService(insight_store=insight_store, process_lookup=_process_lookup)
-        _seed_ops_demo(ops_copilot)  # demo：近30天4单同因卡住 + 预置一张待授权工单
+        _seed_ops_demo(ops_copilot)  # demo：近30天4单同因卡住的反哺历史（授权工单不预置，由用户现场生成）
+        _seed_resolved_insight_history(insight_store)  # demo：请假流程已修掉的历史问题，给采纳率一个真实分母
         # demo：把报销合成数据里确定性检出的效能问题沉淀进洞察层，起始态设计侧就有真实运行
         # 反馈可处理，不是凭空造的问题。请假流程故意不预置分析侧洞察（只留运维反哺的覆盖
         # 漏洞/组织缺口）——留给演示现场走一遍"效能分析对话反哺 + 生成诊断报告"，让「流程
@@ -122,6 +171,7 @@ def create_app(
         insight_store.clear()
         ops_copilot.reset_demo_state()
         _seed_ops_demo(ops_copilot)
+        _seed_resolved_insight_history(insight_store)
         expense_analytics.seed_insights()
 
     demo_state = DemoStateService(

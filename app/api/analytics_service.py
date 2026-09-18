@@ -41,6 +41,20 @@ LEAVE_ANALYTICS_DIR = PROJECT_ROOT / "data/analytics/leave_request"
 _MAX_DIAGNOSIS_HISTORY = 20  # 存档上限，超过丢最旧的，避免无限增长
 
 
+# 价值层用的标准工时系数（小时）。**计次是真实的，系数是明示的假设值**，调这里即可。
+# 每项后面标的是"接真实数据时该在哪埋点"——demo 阶段先按计次估算，不影响口径成立。
+_EFFORT_HOURS = {
+    "审批动作": 5 / 60,    # 埋点：每次审批动作提交时记一条（谁、哪条流程、哪个环节）
+    "运维处置": 20 / 60,   # 埋点：副驾处置方案被确认时、授权台批准时各记一条
+    "设计初始化": 1.5,     # 埋点：初始化任务完成时记一条，带实际耗时
+    "设计修改": 10 / 60,   # 埋点：会话式修改每确认一次改动记一条
+}
+# 设计侧尚未埋点，demo 用示意值；接上埋点后换成真实轮次/次数即可。
+_DEMO_DESIGN_ROUNDS = 6
+# 还没有任何反哺洞察时，采纳率的示意基线（已采纳 / 全部）；一旦真有洞察就走真算。
+_DEMO_ADOPTED = (3, 5)
+
+
 class AnalyticsService:
     def __init__(
         self,
@@ -49,6 +63,7 @@ class AnalyticsService:
         query_agent: AnalyticsQueryAgent | None = None,
         threshold_config: ThresholdConfig | None = None,
         insight_store: Any | None = None,
+        design_activity: Any | None = None,
     ):
         self.analytics_dir = Path(analytics_dir)
         # 惰性构造 agent：只有真正需要时才创建 Bedrock client，
@@ -59,13 +74,81 @@ class AnalyticsService:
         # 同一份阈值，不然"报告里判定是堵点"和"对话里判定是堵点"可能对不上。
         self._threshold_config = threshold_config or ThresholdConfig()
         self._insight_store = insight_store  # 反哺闭环：分析侧写入运行洞察（可空，不影响看板/问答本身）
+        # 价值层「负责人自助上线」用：一个返回 {published/initialized/adjusted} 的可调用对象。
+        # 设计侧数据不归分析服务管，所以由外部注入，避免这里反向依赖设计服务。
+        self._design_activity = design_activity
 
     # ── 看板 ──────────────────────────────────────
     def dashboard_metrics(self) -> dict[str, Any]:
         scenario, process, cases = self._load()
         metrics = self._compute(scenario, process, cases)
         metrics["custom_metrics"] = self._run_custom_metrics(cases)
+        metrics["value_metrics"] = self._value_metrics(metrics, process)
         return metrics
+
+    # ── 看板顶部「价值层」：证明这套系统有没有省力（下层那几张是描述现状的运行统计）──
+    # 纪律跟别处一致：每项都标数据成色（真算 / 部分真算 / 按动作计次估算），不藏水分。
+    # 尚未埋点的地方，埋点位置写在 _EFFORT_HOURS 与各项 note 里，便于接真实数据时按图索骥。
+    def _value_metrics(self, metrics: dict[str, Any], process: Any) -> dict[str, Any]:
+        ov = metrics.get("overview") or {}
+        node_metrics = metrics.get("node_metrics") or {}
+
+        # ① 每条流程全生命周期人工投入（北极星）
+        # 口径：人工动作计次 × 标准工时。**不能直接用停留时长**——那里面含排队等待，
+        # 不等于人真的花了这么久。计次是真实的，工时系数是明示的假设值。
+        approval_actions = sum(v.get("visits", 0) for v in node_metrics.values())
+        ops_actions = ov.get("manual_intervention_case_count", 0)
+        run_hours = approval_actions * _EFFORT_HOURS["审批动作"]
+        ops_hours = ops_actions * _EFFORT_HOURS["运维处置"]
+        design_hours = _EFFORT_HOURS["设计初始化"] + _DEMO_DESIGN_ROUNDS * _EFFORT_HOURS["设计修改"]
+        total_hours = design_hours + run_hours + ops_hours
+
+        # ② 负责人自助上线
+        # 衡量的是**设计侧自主性**：流程负责人不找系统管理员/产品经理，自己用副驾把流程
+        # 建起来、改好、上架。"有没有对外求助"本身不好统计，改用三个已有真实记录侧面反映：
+        # 上架条数（完成信号）＋ 初始化条数、确认落地的调整次数（工具被真实使用的程度）。
+        # 主数字用**上架数**而不是调整次数——调整多不一定是好事（可能是工具难用导致反复改），
+        # 上架才代表"真的自己做完了"。
+        activity = self._design_activity() if self._design_activity else {}
+
+        # ③ 优化建议采纳率——有洞察就真算（不用新埋点：洞察本来就有 新发现/已查看/已消解 三态）；
+        # 一条洞察都还没产生时（刚切回起始态、还没跑过诊断），退化为示意基线，免得卡片空着。
+        adopted_ratio, adopted_n, insight_n = self._insight_adoption(process)
+        adoption_estimated = insight_n == 0
+        if adoption_estimated:
+            adopted_n, insight_n = _DEMO_ADOPTED
+            adopted_ratio = adopted_n / insight_n
+
+        return {
+            "manual_effort_hours": round(total_hours, 1),
+            "manual_effort_breakdown": {
+                "设计": round(design_hours, 1), "运行": round(run_hours, 1), "运维": round(ops_hours, 1),
+            },
+            "manual_effort_estimated": True,
+            "self_service_published": activity.get("published", 0),
+            "self_service_basis": {
+                "初始化": activity.get("initialized", 0), "确认调整": activity.get("adjusted", 0),
+            },
+            "self_service_estimated": False,
+            "insight_adoption_ratio": adopted_ratio,
+            "insight_adoption_basis": {"已采纳": adopted_n, "全部": insight_n},
+            "insight_adoption_estimated": adoption_estimated,
+        }
+
+    def _insight_adoption(self, process: Any) -> tuple[float | None, int, int]:
+        """采纳率 = （已查看 + 已消解）÷ 全部洞察。设计侧确认修复时会把洞察置为已消解，
+        所以演示中修掉一条，这个数字会当场往上走——闭环是看得见的。"""
+        if self._insight_store is None:
+            return None, 0, 0
+        try:
+            key = process.meta.process_id
+            mine = [i for i in self._insight_store.all_insights() if i.workflow_definition_id == key]
+        except Exception:  # noqa: BLE001 - 取不到洞察不影响看板其余部分
+            return None, 0, 0
+        if not mine:
+            return None, 0, 0
+        adopted = sum(1 for i in mine if getattr(i.status, "value", i.status) in ("acknowledged", "resolved"))
+        return adopted / len(mine), adopted, len(mine)
 
     # ── 诊断（Mode A）────────────────────────────
     def diagnosis_report(self) -> dict[str, Any]:

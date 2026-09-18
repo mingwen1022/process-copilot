@@ -1361,6 +1361,27 @@ class WorkflowDesignService:
             "status": "DRAFT",
         }
 
+    def design_activity_counts(self) -> dict[str, int]:
+        """设计侧自助活动计数（看板价值层「负责人自助上线」用）。
+
+        都是从会话消息里已有的事件直接数出来的**真实记录**，不是估算：
+        - 初始化条数：assistant 消息事件 draft_initialized（负责人用副驾从零建了一条流程）
+        - 调整次数：assistant 消息事件 edit_applied（会话式修改真正确认落地的那些，
+          不含 edit_no_change 那种说了但没改成的）
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT payload_json FROM workflow_design_messages WHERE role = 'assistant'"
+            ).fetchall()
+        initialized = adjusted = 0
+        for row in rows:
+            event = (_json_loads(row["payload_json"], {}) or {}).get("event")
+            if event == "draft_initialized":
+                initialized += 1
+            elif event == "edit_applied":
+                adjusted += 1
+        return {"initialized": initialized, "adjusted": adjusted}
+
     def design_summary_for_workflow(self, workflow_definition_id: str) -> dict[str, Any] | None:
         with self._connect() as conn:
             row = conn.execute(
